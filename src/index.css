@@ -1,0 +1,15 @@
+a {
+  text-decoration: none;
+  color: black;
+}
+
+#sketches-container {
+  border: 1px solid red;
+}
+
+.sketch-item {
+  border: 1px solid blue;
+  padding: 5px;
+  margin: 5px;
+  display: block;
+}

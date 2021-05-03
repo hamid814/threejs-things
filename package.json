@@ -1,16 +1,35 @@
 {
-  "name": "threejs-things",
+  "name": "new-webpack",
   "version": "1.0.0",
-  "description": "my-threejs-practices",
-  "main": "index.js",
+  "description": "",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "webpack serve --config ./config/webpack.dev.js",
+    "build": "npm run setupFileNames && webpack --config ./config/webpack.prod.js",
+    "setupFileNames": "node -e \"require('./fileNames.js').setupJSON()\""
   },
+  "keywords": [],
   "author": "hamid814",
   "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.14.0",
+    "@babel/preset-env": "^7.14.0",
+    "babel-loader": "^8.2.2",
+    "clean-webpack-plugin": "^4.0.0-alpha.0",
+    "css-loader": "^5.2.4",
+    "html-loader": "^2.1.2",
+    "html-webpack-plugin": "^5.3.1",
+    "style-loader": "^2.0.0",
+    "webpack": "^5.36.2",
+    "webpack-cli": "^4.6.0",
+    "webpack-dev-server": "^3.11.2",
+    "webpack-merge": "^5.7.3"
+  },
   "dependencies": {
+    "colors": "^1.4.0",
     "gsap": "^3.6.1",
-    "simplex-noise": "^2.4.0",
-    "three": "^0.127.0"
-  }
+    "three": "^0.128.0"
+  },
+  "browserslist": [
+    "ie 6"
+  ]
 }
