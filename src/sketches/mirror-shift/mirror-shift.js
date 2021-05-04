@@ -4,9 +4,11 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const canvas = document.getElementById('webgl');
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
 renderer.setSize(innerWidth, innerHeight);
-document.body.appendChild(renderer.domElement);
+// document.body.appendChild(renderer.domElement);
 renderer.setClearColor(0x999999);
 
 const scene = new THREE.Scene();
