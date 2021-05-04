@@ -1,12 +1,9 @@
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HTMLWebPackPlugin = require('html-webpack-plugin');
-const hbs = require('handlebars');
 const { getfileNames, getHbs } = require('../fileNames');
 
 const htmlsFiles = getHbs();
-
-console.log(htmlsFiles);
 
 const jsEntries = {};
 
@@ -14,15 +11,17 @@ getfileNames().forEach((name) => {
   jsEntries[name] = path.join(__dirname, `../src/sketches/${name}/${name}.js`);
 });
 
-console.log(getfileNames());
-
 const HTMLEntries = [];
 
 getfileNames().forEach((name) => {
+  templatePath =
+    htmlsFiles.indexOf(name) === -1
+      ? path.join(__dirname, `../src/html/fallback.hbs`)
+      : path.join(__dirname, `../src/sketches/${name}/${name}.hbs`);
+
   HTMLEntries.push(
     new HTMLWebPackPlugin({
-      template: path.join(__dirname, `../src/sketches/${name}/${name}.hbs`),
-      // template: path.join(__dirname, `../src/html/fallback.hbs`),
+      template: templatePath,
       minify: true,
       filename: name + '.html',
       title: name.replace('-', ' '),
