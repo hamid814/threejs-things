@@ -4,11 +4,9 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 
-const canvas = document.getElementById('webgl');
-
-const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight);
-// document.body.appendChild(renderer.domElement);
+document.body.appendChild(renderer.domElement);
 renderer.setClearColor(0x999999);
 
 const scene = new THREE.Scene();
@@ -256,9 +254,9 @@ function render() {
   shiftPass.uniforms.time.value = time;
   time += 0.003;
 
-  orb.rotation.x += 0.01;
-  orb.rotation.y += 0.015;
-  orb.rotation.z += 0.005;
+  // orb.rotation.x += 0.01;
+  // orb.rotation.y += 0.015;
+  // orb.rotation.z += 0.005;
 
   requestAnimationFrame(render);
 }

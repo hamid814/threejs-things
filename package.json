@@ -34,7 +34,9 @@
     "webpack-merge": "^5.7.3"
   },
   "dependencies": {
+    "apparatus-generator": "^1.6.5",
     "gsap": "^3.6.1",
+    "simplex-noise": "^2.4.0",
     "three": "^0.128.0"
   },
   "browserslist": [
