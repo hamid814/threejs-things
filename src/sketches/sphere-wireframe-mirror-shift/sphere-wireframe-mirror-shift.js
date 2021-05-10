@@ -4,7 +4,13 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const canvas = document.getElementById('webgl');
+
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  canvas,
+  preserveDrawingBuffer: true,
+});
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
 renderer.setClearColor(0x999999);
@@ -252,28 +258,66 @@ const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
 const shiftPass = new ShaderPass(shiftShader);
-// shiftPass.enabled = false;
 composer.addPass(shiftPass);
 
 const mirrorPass = new ShaderPass(mirrorShader);
-// mirrorPass.enabled = false;
 composer.addPass(mirrorPass);
 
 let time = 0;
 
 function render() {
-  // renderer.render(scene, camera);
   composer.render();
 
   orb.material.uniforms.time.value = time;
   shiftPass.uniforms.time.value = time;
   time += 0.003;
 
-  // orb.rotation.x += 0.01;
-  // orb.rotation.y += 0.015;
-  // orb.rotation.z += 0.005;
-
   requestAnimationFrame(render);
 }
 
 render();
+
+window.addEventListener('resize', () => {
+  const w = innerWidth;
+  const h = innerHeight;
+
+  renderer.setSize(w, h);
+
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+});
+
+// screenshot
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'p') {
+    saveAsImage();
+  }
+});
+var strDownloadMime = 'image/octet-stream';
+function saveAsImage() {
+  try {
+    var strMime = 'image/jpeg';
+    var imgData = renderer.domElement.toDataURL(strMime);
+
+    var scripts = document.getElementsByTagName('script');
+    var lastScript = scripts[scripts.length - 1];
+    var scriptName = new URL(lastScript.src).pathname.slice(1, -3);
+
+    saveFile(imgData.replace(strMime, strDownloadMime), scriptName + '.jpg');
+  } catch (e) {
+    console.log(e);
+    return;
+  }
+}
+var saveFile = function (strData, filename) {
+  var link = document.createElement('a');
+  if (typeof link.download === 'string') {
+    document.body.appendChild(link); //Firefox requires the link to be in the body
+    link.download = filename;
+    link.href = strData;
+    link.click();
+    document.body.removeChild(link); //remove the link when done
+  } else {
+    location.replace(uri);
+  }
+};

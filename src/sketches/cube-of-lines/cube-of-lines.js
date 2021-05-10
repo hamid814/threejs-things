@@ -2,7 +2,13 @@ import * as THREE from 'three';
 import noise from '../../glsl-util/perlin/noise4D';
 import rotation from '../../glsl-util/shaders/rotate';
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const canvas = document.getElementById('webgl');
+
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  canvas,
+  preserveDrawingBuffer: true,
+});
 renderer.setSize(innerWidth, innerHeight);
 renderer.setClearColor(0x121212);
 document.body.appendChild(renderer.domElement);
@@ -73,9 +79,9 @@ const material = new THREE.ShaderMaterial({
 });
 
 const linesCount = 1;
-const linesLength = 0.1;
-const edgesCount = 15;
-const edgesWidth = 1;
+const linesLength = 0.3;
+const edgesCount = 22;
+const edgesWidth = 1.1;
 
 const positions = new Float32Array(Math.pow(edgesCount, 3) * 6);
 const colors = new Float32Array(linesCount * 2 * 3);
@@ -89,6 +95,7 @@ for (let x = 0; x < edgesCount; x++) {
   for (let y = 0; y < edgesCount; y++) {
     const uvY = y / (edgesCount - 1);
     const posY = (uvY * 2.0 - 1.0) * edgesWidth;
+
     for (let z = 0; z < edgesCount; z++) {
       const uvZ = z / (edgesCount - 1);
       const posZ = (uvZ * 2.0 - 1.0) * edgesWidth;
@@ -137,7 +144,7 @@ let time = 0;
 function render() {
   renderer.render(scene, camera);
 
-  time += 0.05;
+  time += 0.03;
 
   line.material.uniforms.uTime.value = time;
 
@@ -153,3 +160,48 @@ document.addEventListener('mousemove', (e) => {
   scene.rotation.y = x / 25;
   scene.rotation.x = y / 25;
 });
+
+window.addEventListener('resize', () => {
+  const w = innerWidth;
+  const h = innerHeight;
+
+  renderer.setSize(w, h);
+
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+});
+
+// screenshot
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'p') {
+    saveAsImage();
+  }
+});
+var strDownloadMime = 'image/octet-stream';
+function saveAsImage() {
+  try {
+    var strMime = 'image/jpeg';
+    var imgData = renderer.domElement.toDataURL(strMime);
+
+    var scripts = document.getElementsByTagName('script');
+    var lastScript = scripts[scripts.length - 1];
+    var scriptName = new URL(lastScript.src).pathname.slice(1, -3);
+
+    saveFile(imgData.replace(strMime, strDownloadMime), scriptName + '.jpg');
+  } catch (e) {
+    console.log(e);
+    return;
+  }
+}
+var saveFile = function (strData, filename) {
+  var link = document.createElement('a');
+  if (typeof link.download === 'string') {
+    document.body.appendChild(link); //Firefox requires the link to be in the body
+    link.download = filename;
+    link.href = strData;
+    link.click();
+    document.body.removeChild(link); //remove the link when done
+  } else {
+    location.replace(uri);
+  }
+};

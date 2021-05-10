@@ -1,8 +1,14 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass';
+import './style/style.css';
+
+const canvas = document.getElementById('webgl');
+
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  canvas,
+  preserveDrawingBuffer: true,
+});
+renderer.setSize(innerWidth, innerHeight);
 
 let plane;
 
@@ -11,29 +17,12 @@ const scene = new THREE.Scene();
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2(0.0, 0.0);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(innerWidth, innerHeight);
-
-document.body.appendChild(renderer.domElement);
-
 renderer.domElement.addEventListener('mousemove', (e) => {
   mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
-  // plane.rotation.x = -mouse.y / 4;
-  // plane.rotation.y = mouse.x / 4;
-
   plane.material.uniforms.mouse.value = mouse;
 });
-
-// const camera = new THREE.OrthographicCamera(
-//   innerWidth / -20,
-//   innerWidth / 20,
-//   innerHeight / 20,
-//   innerHeight / -20,
-//   1,
-//   1000
-// );
 
 const camera = new THREE.PerspectiveCamera(
   45,
@@ -41,40 +30,9 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-
 camera.position.set(0, 0, 30);
 
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.update();
-
-Object.assign(THREE.PlaneGeometry.prototype, {
-  toGrid: function () {
-    let segmentsX = this.parameters.widthSegments || 1;
-    let segmentsY = this.parameters.heightSegments || 1;
-    let indices = [];
-    for (let i = 0; i < segmentsY + 1; i++) {
-      let index11 = 0;
-      let index12 = 0;
-      for (let j = 0; j < segmentsX; j++) {
-        index11 = (segmentsX + 1) * i + j;
-        index12 = index11 + 1;
-        let index21 = index11;
-        let index22 = index11 + (segmentsX + 1);
-        indices.push(index11, index12);
-        if (index22 < (segmentsX + 1) * (segmentsY + 1) - 1) {
-          indices.push(index21, index22);
-        }
-      }
-      if (index12 + segmentsX + 1 <= (segmentsX + 1) * (segmentsY + 1) - 1) {
-        indices.push(index12, index12 + segmentsX + 1);
-      }
-    }
-    // this.setIndex(indices);
-    return this;
-  },
-});
-
-const planeGeo = new THREE.PlaneGeometry(50, 50, 50, 50).toGrid();
+const planeGeo = new THREE.PlaneGeometry(50, 50, 50, 50);
 
 const vertexShader = `
   uniform vec2 bumpPos;
@@ -149,3 +107,48 @@ function render() {
 }
 
 render();
+
+window.addEventListener('resize', () => {
+  const w = innerWidth;
+  const h = innerHeight;
+
+  renderer.setSize(w, h);
+
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+});
+
+// screenshot
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'p') {
+    saveAsImage();
+  }
+});
+var strDownloadMime = 'image/octet-stream';
+function saveAsImage() {
+  try {
+    var strMime = 'image/jpeg';
+    var imgData = renderer.domElement.toDataURL(strMime);
+
+    var scripts = document.getElementsByTagName('script');
+    var lastScript = scripts[scripts.length - 1];
+    var scriptName = new URL(lastScript.src).pathname.slice(1, -3);
+
+    saveFile(imgData.replace(strMime, strDownloadMime), scriptName + '.jpg');
+  } catch (e) {
+    console.log(e);
+    return;
+  }
+}
+var saveFile = function (strData, filename) {
+  var link = document.createElement('a');
+  if (typeof link.download === 'string') {
+    document.body.appendChild(link); //Firefox requires the link to be in the body
+    link.download = filename;
+    link.href = strData;
+    link.click();
+    document.body.removeChild(link); //remove the link when done
+  } else {
+    location.replace(uri);
+  }
+};

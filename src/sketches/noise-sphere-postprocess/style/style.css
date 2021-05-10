@@ -1,0 +1,9 @@
+.panel {
+  color: #eee;
+  border: 1px solid #eee;
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 20px;
+  margin: 20px;
+}

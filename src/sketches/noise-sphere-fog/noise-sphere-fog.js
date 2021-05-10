@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import SimplexNoise from 'simplex-noise';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import gsap from 'gsap';
 
 let animating = true;
@@ -67,6 +66,16 @@ function goPage() {
   }, 1500);
 }
 
+const canvas = document.getElementById('webgl');
+
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  canvas,
+  preserveDrawingBuffer: true,
+});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+
 const noise = new SimplexNoise();
 
 const mouse = new THREE.Vector2(1, 1);
@@ -86,13 +95,6 @@ const camera = new THREE.PerspectiveCamera(
 );
 camera.position.set(0, 60, 130);
 camera.up.set(0, 100, 0);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(innerWidth, innerHeight);
-document.body.appendChild(renderer.domElement);
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.update();
 
 const orbField = new THREE.Object3D();
 
@@ -217,3 +219,48 @@ btn.addEventListener('click', () => {
 });
 
 document.body.appendChild(btn);
+
+window.addEventListener('resize', () => {
+  const w = innerWidth;
+  const h = innerHeight;
+
+  renderer.setSize(w, h);
+
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+});
+
+// screenshot
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'p') {
+    saveAsImage();
+  }
+});
+var strDownloadMime = 'image/octet-stream';
+function saveAsImage() {
+  try {
+    var strMime = 'image/jpeg';
+    var imgData = renderer.domElement.toDataURL(strMime);
+
+    var scripts = document.getElementsByTagName('script');
+    var lastScript = scripts[scripts.length - 1];
+    var scriptName = new URL(lastScript.src).pathname.slice(1, -3);
+
+    saveFile(imgData.replace(strMime, strDownloadMime), scriptName + '.jpg');
+  } catch (e) {
+    console.log(e);
+    return;
+  }
+}
+var saveFile = function (strData, filename) {
+  var link = document.createElement('a');
+  if (typeof link.download === 'string') {
+    document.body.appendChild(link); //Firefox requires the link to be in the body
+    link.download = filename;
+    link.href = strData;
+    link.click();
+    document.body.removeChild(link); //remove the link when done
+  } else {
+    location.replace(uri);
+  }
+};

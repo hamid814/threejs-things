@@ -1,0 +1,8 @@
+#panel {
+  position: absolute;
+  color: #eee;
+  padding: 20px;
+  border: 1px solid #eee;
+  margin: 20px;
+  cursor: default;
+}

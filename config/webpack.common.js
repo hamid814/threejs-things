@@ -16,7 +16,7 @@ const HTMLEntries = [];
 getfileNames().forEach((name) => {
   templatePath =
     htmlsFiles.indexOf(name) === -1
-      ? path.join(__dirname, `../src/html/fallback.hbs`)
+      ? path.join(__dirname, `../src/html/common.hbs`)
       : path.join(__dirname, `../src/sketches/${name}/${name}.hbs`);
 
   HTMLEntries.push(
