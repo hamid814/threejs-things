@@ -12,6 +12,7 @@ const renderer = new THREE.WebGLRenderer({
   preserveDrawingBuffer: true,
 });
 renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(2, devicePixelRatio));
 document.body.appendChild(renderer.domElement);
 renderer.setClearColor(0xffffff);
 
@@ -160,7 +161,7 @@ const fragmentShader = `
   }
 `;
 
-const orbGeo = new THREE.IcosahedronGeometry(1.4, 64);
+const orbGeo = new THREE.IcosahedronGeometry(1.4, 32);
 const orbMat = new THREE.ShaderMaterial({
   uniforms: {
     time: { value: 0 },

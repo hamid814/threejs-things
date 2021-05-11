@@ -1,6 +1,7 @@
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HTMLWebPackPlugin = require('html-webpack-plugin');
+const ImageminPlugin = require('image-minimizer-webpack-plugin');
 const { getfileNames, getHbs } = require('../fileNames');
 
 const htmlsFiles = getHbs();
@@ -24,7 +25,7 @@ getfileNames().forEach((name) => {
       template: templatePath,
       minify: true,
       filename: name + '.html',
-      title: name.replace('-', ' '),
+      title: name,
       chunks: [name],
     })
   );
@@ -46,7 +47,16 @@ module.exports = {
           from: path.join(__dirname, '../src/textures'),
           to: path.join(__dirname, '../dist/textures'),
         },
+        {
+          from: path.join(__dirname, '../src/images'),
+          to: path.join(__dirname, '../dist/images'),
+        },
       ],
+    }),
+    new ImageminPlugin({
+      minimizerOptions: {
+        plugins: [['mozjpeg', { progressive: true, quality: 25 }]],
+      },
     }),
     new HTMLWebPackPlugin({
       template: path.join(__dirname, '../src/index.html'),

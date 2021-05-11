@@ -12,6 +12,7 @@ const renderer = new THREE.WebGLRenderer({
   preserveDrawingBuffer: true,
 });
 renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(2, devicePixelRatio));
 document.body.appendChild(renderer.domElement);
 renderer.setClearColor(0xffffff);
 

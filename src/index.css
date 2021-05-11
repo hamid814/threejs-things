@@ -1,15 +1,46 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
 a {
   text-decoration: none;
   color: black;
 }
 
 #sketches-container {
-  border: 1px solid red;
+  margin: 0 auto;
+  margin-top: 70vh;
+  margin-bottom: 30vh;
+  display: flex;
+  flex-wrap: wrap;
+  width: 85%;
 }
 
 .sketch-item {
-  border: 1px solid blue;
-  padding: 5px;
-  margin: 5px;
+  position: relative;
+  padding: 0;
   display: block;
+  flex-basis: 50%;
+}
+
+.sketch-item-name {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+#webgl {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -1;
+}
+
+@media only screen and (max-width: 600px) {
+  #sketckes-container {
+    width: 100%;
+    border: 1px solid red;
+  }
 }
