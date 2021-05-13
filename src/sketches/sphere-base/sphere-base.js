@@ -1,5 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 
 const canvas = document.getElementById('webgl');
 
@@ -9,18 +12,14 @@ const renderer = new THREE.WebGLRenderer({
   preserveDrawingBuffer: true,
 });
 renderer.setSize(innerWidth, innerHeight);
+renderer.setSize(600, 600);
 document.body.appendChild(renderer.domElement);
 renderer.setClearColor(0x999999);
 
 const scene = new THREE.Scene();
 
-const camera = new THREE.PerspectiveCamera(
-  45,
-  innerWidth / innerHeight,
-  0.1,
-  1000
-);
-camera.position.set(0, 0, 5);
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+camera.position.set(0, 0, 4);
 camera.lookAt(0, 0, 0);
 
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -165,13 +164,56 @@ const orbMat = new THREE.ShaderMaterial({
 const orb = new THREE.Mesh(orbGeo, orbMat);
 scene.add(orb);
 
+const mirrorShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    opacity: { value: 1.0 },
+  },
+
+  vertexShader: `
+		varying vec2 vUv;
+
+		void main() {
+			vUv = uv;
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+		}`,
+  fragmentShader: `
+		uniform sampler2D tDiffuse;
+		varying vec2 vUv;
+
+    float map(float value, float min1, float max1, float min2, float max2) {
+      return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+    }
+    
+		void main() {
+      vec2 doubleUv = vUv * 2.0;
+
+      if(vUv.x > 0.5) doubleUv.x = map(doubleUv.x - 1.0, 0.0, 1.0, 1.0, 0.0);
+      
+      if (vUv.y > 0.5) doubleUv.y = map(doubleUv.y - 1.0, 0.0, 1.0, 1.0, 0.0);
+
+			gl_FragColor = texture2D(tDiffuse, doubleUv);
+		}`,
+};
+
+const composer = new EffectComposer(renderer);
+
+const renderPass = new RenderPass(scene, camera);
+composer.addPass(renderPass);
+
+const mirrorPass = new ShaderPass(mirrorShader);
+composer.addPass(mirrorPass);
+
 let time = 0;
 
 function render() {
-  renderer.render(scene, camera);
+  // renderer.render(scene, camera);
+  composer.render();
 
   orb.material.uniforms.time.value = time;
   time += 0.003;
+
+  orb.rotateZ(0.01);
 
   requestAnimationFrame(render);
 }

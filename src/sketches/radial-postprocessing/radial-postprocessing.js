@@ -3,7 +3,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import noise from '../../glsl-util/perlin/noise4D';
-import rotate from '../../glsl-util/shaders/rotate';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 const canvas = document.getElementById('webgl');
 
@@ -26,6 +26,8 @@ const camera = new THREE.PerspectiveCamera(
 camera.position.set(0, 0, 2);
 camera.lookAt(0, 0, 0);
 
+new OrbitControls(camera, renderer.domElement);
+
 const vertexShader = `
   varying vec2 vUv;
 
@@ -45,13 +47,13 @@ const fragmentShader = `
   ${noise}
   
   void main() {
-    float noiseValue = noise(vec3(vUv.x * 15.0, vUv.y * 15.0, uTime));
+    float noiseValue = noise(vec3(vUv.x * 20.0, vUv.y * 20.0, uTime));
     
     noiseValue = sin(noiseValue * 10.0);
     
     noiseValue = step(noiseValue, -0.1);
 
-    vec3 color = noiseValue == 0.0 ? vec3(1.0, 0.3, 0.0) : vec3(0.4, 0.3, 0.2);
+    vec3 color = noiseValue == 0.0 ? vec3(1.0, 0.7, 0.2) : vec3(0.3, 0.2, 0.1);
 
     gl_FragColor = vec4(color, 1.0);
   }
@@ -74,6 +76,8 @@ scene.add(plane);
 const radialShader = {
   uniforms: {
     tDiffuse: { value: null },
+    ratio: { value: innerWidth / innerHeight },
+    width: { value: innerWidth },
   },
   vertexShader: `
     varying vec2 vUv;
@@ -88,13 +92,12 @@ const radialShader = {
     #define PI 3.1415926538
   
     uniform sampler2D tDiffuse;
+    uniform float ratio;
+    uniform float width;
     
     varying vec2 vUv;
-
-    ${rotate}
   
-    vec2 rotateUV(vec2 uv, float rotation, vec2 mid)
-      {
+    vec2 rotateUV(vec2 uv, float rotation, vec2 mid) {
           return vec2(
             cos(rotation) * (uv.x - mid.x) + sin(rotation) * (uv.y - mid.y) + mid.x,
             cos(rotation) * (uv.y - mid.y) - sin(rotation) * (uv.x - mid.x) + mid.y
@@ -102,12 +105,19 @@ const radialShader = {
       }
     
     void main() {
-      float dist = distance(vUv, vec2(0.5));
+      float lvl = 6.0;
+      
+      vec2 ratioUv = vUv;
+      ratioUv.x *= ratio;
+      float shiftRatio = ratio / 2.0 - 0.5;
+      ratioUv.x -= shiftRatio;
+      
+      float dist = distance(ratioUv, vec2(0.5));
 
-      float angle = atan(vUv.x - 0.5, vUv.y - 0.5);
+      float angle = atan(ratioUv.x - 0.5, ratioUv.y - 0.5);
       angle /= PI * 2.0;
       angle += 0.5;
-      angle *= 12.0;
+      angle *= lvl * 2.0;
       if(mod(angle, 2.0) < 1.0) {
         angle = mod(angle, 1.0);
       } else {
@@ -115,12 +125,22 @@ const radialShader = {
       }
       
       vec2 arbUV = vec2(0.0, dist) + 0.5;
+      
+      float rotationValue = angle * PI * 2.0 / (lvl * 2.0);
+      // float rotationValue = angle;
+      
+      vec2 rotatedArbUV = rotateUV(arbUV, rotationValue, vec2(0.5));
 
-      vec2 rotatedArbUV = rotateUV(arbUV, angle, vec2(0.5));
-
-      vec4 texel = texture2D( tDiffuse, rotatedArbUV );
+      vec2 repeatedUv = rotatedArbUV;
+      repeatedUv.x = mod(rotatedArbUV.x, 1.0);
+      if (rotatedArbUV.x > 1.0) repeatedUv.x = 1.0 - repeatedUv.x;
+      repeatedUv.y = mod(rotatedArbUV.y, 1.0);
+      if (rotatedArbUV.y > 1.0) repeatedUv.y = 1.0 - repeatedUv.y;
+      
+      vec4 texel = texture2D( tDiffuse, repeatedUv );
       
       gl_FragColor = texel;
+      // gl_FragColor = vec4(repeatedUv.x, 0.0, 0.0, 1.0);
     }
   `,
 };
@@ -139,7 +159,7 @@ function render() {
   composer.render();
 
   plane.material.uniforms.uTime.value = time;
-  time += 0.0006;
+  time += 0.006;
 
   requestAnimationFrame(render);
 }
@@ -154,6 +174,10 @@ window.addEventListener('resize', () => {
 
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
+});
+
+document.body.addEventListener('mousemove', () => {
+  time -= 0.01;
 });
 
 // screenshot

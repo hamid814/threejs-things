@@ -17,7 +17,7 @@ const camera = new THREE.PerspectiveCamera(
 camera.position.set(0, 0, 10);
 camera.lookAt(0, 0, 0);
 
-new OrbitControls(camera, renderer.domElement);
+// new OrbitControls(camera, renderer.domElement);
 
 const scene = new THREE.Scene();
 
