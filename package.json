@@ -6,7 +6,8 @@
     "dev": "npm run setupFileNames && webpack serve --config ./config/webpack.dev.js",
     "build": "npm run setupFileNames && webpack --config ./config/webpack.prod.js",
     "deploy": "gh-pages -d dist",
-    "setupFileNames": "node -e \"require('./fileNames.js').setupJSON()\""
+    "setupFileNames": "node -e \"require('./fileNames.js').setupJSON()\"",
+    "new": "node newProject"
   },
   "keywords": [],
   "author": "hamid814",
