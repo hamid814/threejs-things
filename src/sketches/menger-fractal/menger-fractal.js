@@ -5,7 +5,11 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 
 const canvas = document.getElementById('webgl');
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  canvas,
+  preserveDrawingBuffer: true,
+});
 renderer.setSize(innerWidth, innerHeight);
 renderer.setClearColor(0xeeeeee);
 renderer.setPixelRatio(2);
@@ -97,10 +101,10 @@ const fractalShader = {
     
     void main() {
       vec2 offsetUv = vUv;
-      offsetUv -= offset / 300.0;
+      offsetUv -= offset / 1300.0;
 
       vec2 zoomUv = offsetUv;
-      zoomUv *= mod(zoom / 5.0 + 5.0, 2.0);
+      zoomUv *= mod(zoom / 30.0, 1.0 - 0.3333333) + 0.3333333;
       
       vec2 ratioUv = zoomUv;
       ratioUv.x *= ratio;
@@ -113,7 +117,6 @@ const fractalShader = {
       for (int i = 1; i <= 27 * 27; i *= 3) {
         float i_float = float(i);
         
-        // if(isCenterLinear(newUv.x, width / i_float) && isCenterLinear(newUv.y, width / i_float)) {
         if(isCenterSquare(newUv.x, newUv.y, width / i_float)) {
           s = 1.0;
           break;
@@ -144,6 +147,39 @@ const render = () => {
   composer.render();
 
   requestAnimationFrame(render);
+
+  zoom += 0.5;
+};
+
+// screenshot
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'p') {
+    saveAsImage();
+  }
+});
+var strDownloadMime = 'image/octet-stream';
+function saveAsImage() {
+  try {
+    var strMime = 'image/jpeg';
+    var imgData = renderer.domElement.toDataURL(strMime);
+
+    saveFile(imgData.replace(strMime, strDownloadMime), 'menger-fractal.jpg');
+  } catch (e) {
+    console.log(e);
+    return;
+  }
+}
+var saveFile = function (strData, filename) {
+  var link = document.createElement('a');
+  if (typeof link.download === 'string') {
+    document.body.appendChild(link); //Firefox requires the link to be in the body
+    link.download = filename;
+    link.href = strData;
+    link.click();
+    document.body.removeChild(link); //remove the link when done
+  } else {
+    location.replace(uri);
+  }
 };
 
 render();

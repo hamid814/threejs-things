@@ -1,7 +1,5 @@
 {
   "pages": [
-    "a",
-    "b",
     "boilerplate",
     "bufferGeo",
     "cube-of-lines",
@@ -59,6 +57,7 @@
     "sphere-red-3-advanced-noise",
     "sphere-red-growing-noise",
     "sphere-red-mirror-shift",
-    "sphere-wireframe-mirror-shift"
+    "sphere-wireframe-mirror-shift",
+    "webgl-mirror-test"
   ]
 }
