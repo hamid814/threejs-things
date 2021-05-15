@@ -18,8 +18,6 @@ const testShader = {
     varying vec2 vUv;
   
     void main() {
-      // vec4 texel = texture2D(tDiffuse, vUv);
-      
       float slowTime = uTime * 10.0;
       
       float amp = 0.005;
