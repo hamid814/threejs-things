@@ -112,13 +112,13 @@ const fractalShader = {
       vec2 newUv = ratioUv * 27.0;
       float width = 50.0;
   
-      float s = 0.0;
+      float s = 1.0;
       
       for (int i = 1; i <= 27 * 27; i *= 3) {
         float i_float = float(i);
         
         if(isCenterSquare(newUv.x, newUv.y, width / i_float)) {
-          s = 1.0;
+          s = 0.0;
           break;
         }
       }
@@ -147,8 +147,6 @@ const render = () => {
   composer.render();
 
   requestAnimationFrame(render);
-
-  zoom += 0.5;
 };
 
 // screenshot

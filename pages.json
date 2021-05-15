@@ -36,6 +36,7 @@
     "radial-postprocessing",
     "radial-shader-high",
     "radial-shift",
+    "RGBNoise-postprocessing",
     "sandbox",
     "sandbox-2",
     "sandbox-cube-of-lines",
