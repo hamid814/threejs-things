@@ -8,42 +8,8 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 let mesh;
 
 const indexArray = [
-  0,
-  2,
-  1,
-  2,
-  3,
-  1,
-  4,
-  6,
-  5,
-  6,
-  7,
-  5,
-  8,
-  10,
-  9,
-  10,
-  11,
-  9,
-  12,
-  14,
-  13,
-  14,
-  15,
-  13,
-  16,
-  18,
-  17,
-  18,
-  19,
-  17,
-  20,
-  22,
-  21,
-  22,
-  23,
-  21,
+  0, 2, 1, 2, 3, 1, 4, 6, 5, 6, 7, 5, 8, 10, 9, 10, 11, 9, 12, 14, 13, 14, 15,
+  13, 16, 18, 17, 18, 19, 17, 20, 22, 21, 22, 23, 21,
 ];
 
 // indexs for each face in a cube
@@ -206,7 +172,6 @@ const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
 const mirrorPass = new ShaderPass(mirrorShader);
-// mirrorPass.enabled = false;
 composer.addPass(mirrorPass);
 
 function render() {
