@@ -189,10 +189,10 @@ const shiftShader = {
 		void main() {
       vec2 shiftedUv = vUv;
 
-      float numStep = 2.0;
+      float numStep = 10.0;
       
-      float dude = floor(vUv.y * 10.0) / 10.0 * sin(time * 3.0);
-      float dude2 = floor(vUv.x * 10.0) / 10.0 * cos(time * 3.0);
+      float dude = floor(vUv.y * numStep) / numStep * sin(time * 3.0);
+      float dude2 = floor(vUv.x * numStep) / numStep * cos(time * 3.0);
       
       shiftedUv.x = shift(shiftedUv.x, dude, 1.0);
       shiftedUv.y = shift(shiftedUv.y, dude2, 1.0);
@@ -243,26 +243,19 @@ const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
 const shiftPass = new ShaderPass(shiftShader);
-// shiftPass.enabled = false;
 composer.addPass(shiftPass);
 
 const mirrorPass = new ShaderPass(mirrorShader);
-// mirrorPass.enabled = false;
 composer.addPass(mirrorPass);
 
 let time = 0;
 
 function render() {
-  // renderer.render(scene, camera);
   composer.render();
 
   orb.material.uniforms.time.value = time;
   shiftPass.uniforms.time.value = time;
   time += 0.003;
-
-  // orb.rotation.x += 0.01;
-  // orb.rotation.y += 0.015;
-  // orb.rotation.z += 0.005;
 
   requestAnimationFrame(render);
 }

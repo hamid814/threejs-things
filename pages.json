@@ -58,6 +58,6 @@
     "sphere-red-growing-noise",
     "sphere-red-mirror-shift",
     "sphere-wireframe-mirror-shift",
-    "webgl-mirror-test"
+    "test_webgl_mirror"
   ]
 }
