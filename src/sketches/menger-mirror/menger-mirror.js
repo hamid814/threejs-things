@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Menger, V, isCube } from '../../menger/mener-builder';
+import { Menger, V } from '../../menger/mener-builder';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -175,12 +175,9 @@ const mirrorPass = new ShaderPass(mirrorShader);
 composer.addPass(mirrorPass);
 
 function render() {
-  // renderer.render(scene, camera);
   composer.render();
 
-  // mesh.rotation.x += 0.001;
   mesh.rotation.y += 0.005;
-  // mesh.rotation.z += 0.002;
 
   requestAnimationFrame(render);
 }
