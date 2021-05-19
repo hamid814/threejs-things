@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import vs from './vert.glsl';
 import fs from './frag.glsl';
+import fs2 from './frag2.glsl';
 
 const canvas = document.getElementById('webgl');
 
@@ -11,7 +12,7 @@ const renderer = new THREE.WebGLRenderer({
   preserveDrawingBuffer: true,
 });
 renderer.setSize(innerWidth, innerHeight);
-renderer.setClearColor(0xeeeeee);
+renderer.setClearColor(0x333333);
 renderer.setPixelRatio(Math.min(2, devicePixelRatio));
 
 const scene = new THREE.Scene();
@@ -22,32 +23,51 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(0, 0, 5);
+camera.position.set(0, 0, 2);
 camera.lookAt(0, 0, 0);
 
 new OrbitControls(camera, renderer.domElement);
 
-const planeGeo = new THREE.PlaneGeometry();
+scene.add(new THREE.AxesHelper());
+
+const planeGeo = new THREE.PlaneGeometry(1, 1, 100, 100);
 const shaderMat = new THREE.ShaderMaterial({
   uniforms: {
     uTime: { value: 0 },
   },
   vertexShader: vs,
   fragmentShader: fs,
+  side: 2,
+});
+const shaderMat2 = new THREE.ShaderMaterial({
+  uniforms: {
+    uTime: { value: 0 },
+  },
+  vertexShader: vs,
+  fragmentShader: fs2,
+  side: 2,
 });
 
 const plane = new THREE.Mesh(planeGeo, shaderMat);
+const plane2 = new THREE.Mesh(planeGeo, shaderMat2);
+
+plane.rotation.y = Math.PI;
+
+plane.position.x = -0.5;
+plane2.position.x = 0.5;
 
 scene.add(plane);
+scene.add(plane2);
 
 let time = 0;
 
 const render = () => {
   renderer.render(scene, camera);
 
-  plane.material.uTime.value = time;
+  plane.material.uniforms.uTime.value = time;
+  plane2.material.uniforms.uTime.value = time;
 
-  time += 0.003;
+  time += 0.03;
 
   requestAnimationFrame(render);
 };
