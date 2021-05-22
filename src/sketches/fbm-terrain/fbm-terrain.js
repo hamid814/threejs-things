@@ -28,9 +28,7 @@ camera.lookAt(0, 0, 0);
 
 new OrbitControls(camera, renderer.domElement);
 
-scene.add(new THREE.AxesHelper());
-
-const planeGeo = new THREE.PlaneGeometry(1, 1, 100, 100);
+const planeGeo = new THREE.PlaneBufferGeometry(1, 1, 3000, 3000);
 const shaderMat = new THREE.ShaderMaterial({
   uniforms: {
     uTime: { value: 0 },
@@ -39,25 +37,25 @@ const shaderMat = new THREE.ShaderMaterial({
   fragmentShader: fs,
   side: 2,
 });
-const shaderMat2 = new THREE.ShaderMaterial({
-  uniforms: {
-    uTime: { value: 0 },
-  },
-  vertexShader: vs,
-  fragmentShader: fs2,
-  side: 2,
-});
+// const shaderMat2 = new THREE.ShaderMaterial({
+//   uniforms: {
+//     uTime: { value: 0 },
+//   },
+//   vertexShader: vs,
+//   fragmentShader: fs2,
+//   side: 2,
+// });
 
 const plane = new THREE.Mesh(planeGeo, shaderMat);
-const plane2 = new THREE.Mesh(planeGeo, shaderMat2);
+// const plane2 = new THREE.Mesh(planeGeo, shaderMat2);
 
 plane.rotation.y = Math.PI;
 
 plane.position.x = -0.5;
-plane2.position.x = 0.5;
+// plane2.position.x = 0.5;
 
 scene.add(plane);
-scene.add(plane2);
+// scene.add(plane2);
 
 let time = 0;
 
@@ -65,11 +63,12 @@ const render = () => {
   renderer.render(scene, camera);
 
   plane.material.uniforms.uTime.value = time;
-  plane2.material.uniforms.uTime.value = time;
+  // plane2.material.uniforms.uTime.value = time;
 
   time += 0.03;
 
-  requestAnimationFrame(render);
+  // saveAsImage();
+  // requestAnimationFrame(render);
 };
 
 window.addEventListener('resize', () => {
@@ -93,11 +92,7 @@ function saveAsImage() {
     var strMime = 'image/jpeg';
     var imgData = renderer.domElement.toDataURL(strMime);
 
-    var scripts = document.getElementsByTagName('script');
-    var lastScript = scripts[scripts.length - 1];
-    var scriptName = new URL(lastScript.src).pathname.slice(1, -3);
-
-    saveFile(imgData.replace(strMime, strDownloadMime), scriptName + '.jpg');
+    saveFile(imgData.replace(strMime, strDownloadMime), 'fmb-terrain.jpg');
   } catch (e) {
     console.log(e);
     return;

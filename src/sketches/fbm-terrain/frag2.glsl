@@ -46,8 +46,8 @@ float fbm ( in vec2 _st) {
 void main() {
   // vUv = uv;
   
-  vec2 st = vUv * 1.0;
-    st += st * abs(sin(uTime*0.1)*3.0);
+  vec2 st = vUv * 3.0;
+    // st += st * abs(sin(uTime*0.1)*3.0);
     vec3 color = vec3(0.0);
 
     vec2 q = vec2(0.);
@@ -56,7 +56,7 @@ void main() {
 
     vec2 r = vec2(0.);
     r.x = fbm( st + 1.0*q + vec2(1.7,9.2)+ 0.15*uTime );
-    r.y = fbm( st + 1.0*q + vec2(8.3,2.8)+ 0.126*uTime);
+    r.y = fbm( st + 1.0*q + vec2(8.3,2.8)+ 0.126*uTime );
 
     float f = fbm(st+r);
 
