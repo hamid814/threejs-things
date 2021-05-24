@@ -45,7 +45,7 @@ let time = 0;
 const render = () => {
   renderer.render(scene, camera);
 
-  plane.material.uTime.value = time;
+  plane.material.uniforms.uTime.value = time;
 
   time += 0.003;
 
