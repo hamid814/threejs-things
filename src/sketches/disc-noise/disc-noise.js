@@ -4,8 +4,6 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import discVS from './glsl/disc.vert.glsl';
 import discFS from './glsl/disc.frag.glsl';
-import noiseVS from './glsl/noise.vert.glsl';
-import noiseFS from './glsl/noise.frag.glsl';
 
 const canvas = document.getElementById('webgl');
 
@@ -39,14 +37,6 @@ const discShader = {
   fragmentShader: discFS,
 };
 
-const noiseShader = {
-  uniforms: {
-    tDiffuse: { value: null },
-  },
-  vertexShader: noiseVS,
-  fragmentShader: noiseFS,
-};
-
 const composer = new EffectComposer(renderer);
 
 const renderPass = new RenderPass(scene, camera);
@@ -54,9 +44,6 @@ composer.addPass(renderPass);
 
 const discPass = new ShaderPass(discShader);
 composer.addPass(discPass);
-
-// const noisePass = new ShaderPass(noiseShader);
-// composer.addPass(noisePass);
 
 let time = 0;
 
@@ -91,11 +78,7 @@ function saveAsImage() {
     var strMime = 'image/jpeg';
     var imgData = renderer.domElement.toDataURL(strMime);
 
-    var scripts = document.getElementsByTagName('script');
-    var lastScript = scripts[scripts.length - 1];
-    var scriptName = new URL(lastScript.src).pathname.slice(1, -3);
-
-    saveFile(imgData.replace(strMime, strDownloadMime), scriptName + '.jpg');
+    saveFile(imgData.replace(strMime, strDownloadMime), 'disc-noise.jpg');
   } catch (e) {
     console.log(e);
     return;
