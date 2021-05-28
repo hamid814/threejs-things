@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import gsap from 'gsap';
 import discVS from './glsl/disc.vert.glsl';
 import discFS from './glsl/disc.frag.glsl';
 
@@ -32,6 +33,7 @@ const discShader = {
     tDiffuse: { value: null },
     ratio: { value: innerWidth / innerHeight },
     uTime: { value: 0 },
+    noiseFactor: { value: 1.0 },
   },
   vertexShader: discVS,
   fragmentShader: discFS,
@@ -39,20 +41,26 @@ const discShader = {
 
 const composer = new EffectComposer(renderer);
 
-const renderPass = new RenderPass(scene, camera);
-composer.addPass(renderPass);
+// const renderPass = new RenderPass(scene, camera);
+// composer.addPass(renderPass);
 
 const discPass = new ShaderPass(discShader);
 composer.addPass(discPass);
 
 let time = 0;
 
+const options = {
+  noiseFactor: 1.0,
+  timeSpeed: 0.003,
+};
+
 const render = () => {
   composer.render();
 
-  time += 0.003;
+  time += options.timeSpeed;
 
   discPass.uniforms.uTime.value = time;
+  discPass.uniforms.noiseFactor.value = options.noiseFactor;
 
   requestAnimationFrame(render);
 };

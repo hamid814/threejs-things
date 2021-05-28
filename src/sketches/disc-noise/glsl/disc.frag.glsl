@@ -14,7 +14,7 @@ void main() {
   float timeN3 = time - 3.0 * timeStep;
   float timeN2 = time - 2.0 * timeStep;
   float timeN1 = time - 1.0 * timeStep;
-  float time0 = time;
+  
   float timeP1 = time + 1.0 * timeStep;
   float timeP2 = time + 2.0 * timeStep;
   float timeP3 = time + 3.0 * timeStep;

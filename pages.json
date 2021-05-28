@@ -7,6 +7,18 @@
     "cubes",
     "cubes-2",
     "disc-noise",
+    "disc-noise-0",
+    "disc-noise-1",
+    "disc-noise-2",
+    "disc-noise-3",
+    "disc-noise-4",
+    "disc-noise-5",
+    "disc-noise-6",
+    "disc-noise-7",
+    "disc-noise-8",
+    "disc-noise-interpolate",
+    "disc-noise-interpolate-0",
+    "disc-noise-interpolate-1",
     "distorted-cube",
     "double-normal",
     "experiment-rotation",
@@ -16,6 +28,7 @@
     "flatshading-line",
     "half-shape",
     "intersecting-tetrahedra",
+    "light-shader",
     "line-rotate",
     "menger-fractal",
     "menger-mirror",
@@ -50,6 +63,7 @@
     "sin-wave-sphere",
     "sin-wave-sphere-high",
     "sin-wave-sphere-step",
+    "some-noise",
     "sphere-base",
     "sphere-brown-4d",
     "sphere-brown-mirror",
@@ -62,6 +76,7 @@
     "sphere-red-growing-noise",
     "sphere-red-mirror-shift",
     "sphere-wireframe-mirror-shift",
-    "test_webgl_mirror"
+    "test_webgl_mirror",
+    "test_webgl_water"
   ]
 }
