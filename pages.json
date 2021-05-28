@@ -1,6 +1,5 @@
 {
   "pages": [
-    "boilerplate",
     "bufferGeo",
     "cube-of-lines",
     "cube-of-lines-ortho",
