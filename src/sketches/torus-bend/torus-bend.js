@@ -11,10 +11,15 @@ const renderer = new THREE.WebGLRenderer({
   preserveDrawingBuffer: true,
 });
 renderer.setSize(innerWidth, innerHeight);
-renderer.setClearColor(0xeeeeee);
+renderer.setClearColor(0xcc4433);
 renderer.setPixelRatio(Math.min(2, devicePixelRatio));
 
 const scene = new THREE.Scene();
+
+// const camera = new THREE.OrthographicCamera(-2, 2, 2, -2, 0.1, 100);
+// camera.position.set(0, 0, 5);
+// camera.lookAt(0, 0, 0);
+// scene.add(camera);
 
 const camera = new THREE.PerspectiveCamera(
   45,
@@ -22,32 +27,188 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(0, 0, 5);
+camera.position.set(0, 3, 3);
 camera.lookAt(0, 0, 0);
+
+// scene.add(new THREE.AxesHelper());
 
 new OrbitControls(camera, renderer.domElement);
 
-const planeGeo = new THREE.PlaneGeometry();
-const shaderMat = new THREE.ShaderMaterial({
+let p = 1024;
+let q = 100;
+let radius = 1;
+let innerRadius = 0.4;
+
+const torusGeo = new THREE.BufferGeometry();
+const torusMat = new THREE.ShaderMaterial({
   uniforms: {
     uTime: { value: 0 },
+    totalP: { value: p },
   },
   vertexShader: vs,
   fragmentShader: fs,
+  side: 2,
+  // wireframe: true,
 });
 
-const plane = new THREE.Mesh(planeGeo, shaderMat);
+// create the geometry
+const positionBuffer = new Float32Array(p * q * 3 * 2 * 3);
+const centerBuffer = new Float32Array(p * q * 3 * 2 * 3);
+const uvBuffer = new Float32Array(p * q * 2 * 2 * 3);
+const positionBA = new THREE.BufferAttribute(positionBuffer, 3);
+const centerBA = new THREE.BufferAttribute(centerBuffer, 3);
+const uvBA = new THREE.BufferAttribute(uvBuffer, 2);
 
-scene.add(plane);
+const sin = Math.sin;
+const cos = Math.cos;
+
+function createMatrix(a) {
+  const mat = new THREE.Matrix3();
+
+  mat.set(cos(a), -sin(a), 0, sin(a), cos(a), 0, 0, 0, 1);
+
+  return mat;
+}
+
+for (let i = 0; i < p; i++) {
+  const nextI = i === p - 1 ? 0 : i + 1;
+  const iPhase = (Math.PI * 2) / p;
+
+  const ix = cos(i * iPhase);
+  const iy = sin(i * iPhase);
+
+  for (let j = 0; j < q; j++) {
+    const nextJ = j === q - 1 ? 0 : j + 1;
+    const jPhase = (Math.PI * 2) / q;
+
+    let angle, rotationMatrix, jx, jy, jz;
+
+    // calc current point
+    angle = i * iPhase;
+    rotationMatrix = createMatrix(angle);
+
+    jx = cos(j * jPhase) * innerRadius + radius;
+    jy = -0.002;
+    jz = sin(j * jPhase) * innerRadius;
+
+    const currentPoint = new THREE.Vector3(jx, jy, jz);
+    currentPoint.applyMatrix3(rotationMatrix);
+
+    // calc next poitn in this ring
+    angle = i * iPhase;
+    rotationMatrix = createMatrix(angle);
+
+    jx = cos(nextJ * jPhase) * innerRadius + radius;
+    jy = -0.002;
+    jz = sin(nextJ * jPhase) * innerRadius;
+
+    const nextPointInRing = new THREE.Vector3(jx, jy, jz);
+    nextPointInRing.applyMatrix3(rotationMatrix);
+
+    // calc this point in next ring
+    angle = nextI * iPhase;
+    rotationMatrix = createMatrix(angle);
+
+    jx = cos(j * jPhase) * innerRadius + radius;
+    jy = 0.002;
+    jz = sin(j * jPhase) * innerRadius;
+
+    const nextRingParallelPoint = new THREE.Vector3(jx, jy, jz);
+    nextRingParallelPoint.applyMatrix3(rotationMatrix);
+
+    // calc next point in next ring
+    angle = nextI * iPhase;
+    rotationMatrix = createMatrix(angle);
+
+    jx = cos(nextJ * jPhase) * innerRadius + radius;
+    jy = 0.002;
+    jz = sin(nextJ * jPhase) * innerRadius;
+
+    const nextRingNextPoint = new THREE.Vector3(jx, jy, jz);
+    nextRingNextPoint.applyMatrix3(rotationMatrix);
+
+    // calc inedxes and fill the pisotion
+    const index = (j + i * q) * 6;
+
+    positionBA.setXYZ(index, currentPoint.x, currentPoint.y, currentPoint.z);
+    positionBA.setXYZ(
+      index + 1,
+      nextPointInRing.x,
+      nextPointInRing.y,
+      nextPointInRing.z
+    );
+    positionBA.setXYZ(
+      index + 2,
+      nextRingParallelPoint.x,
+      nextRingParallelPoint.y,
+      nextRingParallelPoint.z
+    );
+    positionBA.setXYZ(
+      index + 3,
+      nextPointInRing.x,
+      nextPointInRing.y,
+      nextPointInRing.z
+    );
+    positionBA.setXYZ(
+      index + 4,
+      nextRingParallelPoint.x,
+      nextRingParallelPoint.y,
+      nextRingParallelPoint.z
+    );
+    positionBA.setXYZ(
+      index + 5,
+      nextRingNextPoint.x,
+      nextRingNextPoint.y,
+      nextRingNextPoint.z
+    );
+
+    centerBA.setXYZ(index, ix, iy, 0);
+    centerBA.setXYZ(index + 1, ix, iy, 0);
+    centerBA.setXYZ(index + 2, ix, iy, 0);
+    centerBA.setXYZ(index + 3, ix, iy, 0);
+    centerBA.setXYZ(index + 4, ix, iy, 0);
+    centerBA.setXYZ(index + 5, ix, iy, 0);
+
+    uvBA.setXY(index, i / (p - 1), j / (q - 1));
+    uvBA.setXY(index + 1, i / (p - 1), j / (q - 1));
+    uvBA.setXY(index + 2, i / (p - 1), j / (q - 1));
+    uvBA.setXY(index + 3, i / (p - 1), j / (q - 1));
+    uvBA.setXY(index + 4, i / (p - 1), j / (q - 1));
+    uvBA.setXY(index + 5, i / (p - 1), j / (q - 1));
+  }
+}
+
+torusGeo.setAttribute('position', positionBA);
+torusGeo.setAttribute('aCenter', centerBA);
+torusGeo.setAttribute('uv', uvBA);
+
+console.log(torusGeo.attributes);
+
+const torus = new THREE.Mesh(torusGeo, torusMat);
+
+// torus.geometry.drawRange.count = 2 * 8;
+
+torus.rotation.x = Math.PI * 0.5;
+
+scene.add(torus);
+
+// scene.add(
+//   new THREE.Mesh(
+// new THREE.TorusGeometry(radius, innerRadius, q, p),
+//     new THREE.MeshBasicMaterial({ color: 0x66cc99, wireframe: true })
+//   )
+// );
 
 let time = 0;
 
 const render = () => {
   renderer.render(scene, camera);
 
-  plane.material.uniforms.uTime.value = time;
+  torus.material.uniforms.uTime.value = time;
 
   time += 0.003;
+
+  // torus.rotateZ(0.05);
 
   requestAnimationFrame(render);
 };
@@ -73,11 +234,7 @@ function saveAsImage() {
     var strMime = 'image/jpeg';
     var imgData = renderer.domElement.toDataURL(strMime);
 
-    var scripts = document.getElementsByTagName('script');
-    var lastScript = scripts[scripts.length - 1];
-    var scriptName = new URL(lastScript.src).pathname.slice(1, -3);
-
-    saveFile(imgData.replace(strMime, strDownloadMime), scriptName + '.jpg');
+    saveFile(imgData.replace(strMime, strDownloadMime), 'torus-bend.jpg');
   } catch (e) {
     console.log(e);
     return;

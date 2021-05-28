@@ -38,9 +38,6 @@ const light3 = new THREE.PointLight(0xffffff, 2.2);
 light3.position.set(-30, 30, 0);
 scene.add(light3);
 
-const lightHepler = new THREE.PointLightHelper(light, 5);
-// scene.add(lightHepler);
-
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.update();
 

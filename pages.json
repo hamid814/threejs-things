@@ -7,18 +7,6 @@
     "cubes",
     "cubes-2",
     "disc-noise",
-    "disc-noise-0",
-    "disc-noise-1",
-    "disc-noise-2",
-    "disc-noise-3",
-    "disc-noise-4",
-    "disc-noise-5",
-    "disc-noise-6",
-    "disc-noise-7",
-    "disc-noise-8",
-    "disc-noise-interpolate",
-    "disc-noise-interpolate-0",
-    "disc-noise-interpolate-1",
     "distorted-cube",
     "double-normal",
     "experiment-rotation",
@@ -77,6 +65,7 @@
     "sphere-red-mirror-shift",
     "sphere-wireframe-mirror-shift",
     "test_webgl_mirror",
-    "test_webgl_water"
+    "test_webgl_water",
+    "torus-bend"
   ]
 }
