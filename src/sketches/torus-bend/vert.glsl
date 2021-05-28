@@ -25,7 +25,7 @@ void main() {
 
   vec3 pos = position;
   pos -= center;
-  pos = rotate(pos, prep, noiseValue * 1.0);
+  // pos = rotate(pos, prep, noiseValue * 1.0);
   pos += center;
 
   vec4 modelViewPosition = viewMatrix * modelMatrix * vec4(pos, 1.0);

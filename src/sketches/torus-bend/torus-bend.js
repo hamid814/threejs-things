@@ -16,11 +16,6 @@ renderer.setPixelRatio(Math.min(2, devicePixelRatio));
 
 const scene = new THREE.Scene();
 
-// const camera = new THREE.OrthographicCamera(-2, 2, 2, -2, 0.1, 100);
-// camera.position.set(0, 0, 5);
-// camera.lookAt(0, 0, 0);
-// scene.add(camera);
-
 const camera = new THREE.PerspectiveCamera(
   45,
   innerWidth / innerHeight,
@@ -45,10 +40,21 @@ const torusMat = new THREE.ShaderMaterial({
     uTime: { value: 0 },
     totalP: { value: p },
   },
-  vertexShader: vs,
+  vertexShader: /* glsl */ `
+    attribute vec3 aCenter;
+
+    varying vec2 vUv;
+    varying vec3 vCenter;
+  
+    void main() {
+      vUv = uv;
+      vCenter = aCenter;
+      
+      gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
+    }
+  `,
   fragmentShader: fs,
   side: 2,
-  // wireframe: true,
 });
 
 // create the geometry
@@ -186,18 +192,17 @@ console.log(torusGeo.attributes);
 
 const torus = new THREE.Mesh(torusGeo, torusMat);
 
-// torus.geometry.drawRange.count = 2 * 8;
-
 torus.rotation.x = Math.PI * 0.5;
 
-scene.add(torus);
+// scene.add(torus);
 
-// scene.add(
-//   new THREE.Mesh(
-// new THREE.TorusGeometry(radius, innerRadius, q, p),
-//     new THREE.MeshBasicMaterial({ color: 0x66cc99, wireframe: true })
-//   )
-// );
+const testTorusGeo = new THREE.TorusGeometry(1, 0.5, 100, 100);
+
+const testTorus = new THREE.Mesh(testTorusGeo, torusMat);
+
+testTorus.rotation.x = Math.PI * 0.5;
+
+scene.add(testTorus);
 
 let time = 0;
 
