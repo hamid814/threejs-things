@@ -11,7 +11,7 @@ const renderer = new THREE.WebGLRenderer({
   preserveDrawingBuffer: true,
 });
 renderer.setSize(innerWidth, innerHeight);
-renderer.setClearColor(0xeeeeee);
+renderer.setClearColor(0xddbb99);
 renderer.setPixelRatio(Math.min(2, devicePixelRatio));
 
 const scene = new THREE.Scene();
@@ -25,34 +25,51 @@ const camera = new THREE.PerspectiveCamera(
 camera.position.set(0, 0, 5);
 camera.lookAt(0, 0, 0);
 
-const light = new THREE.PointLight();
-light.position.set(5, 5, 5);
-scene.add(light);
+scene.add(new THREE.AxesHelper(4));
 
-const light2 = new THREE.PointLight();
-light2.position.set(-5, -5, -5);
-scene.add(light2);
+const light = new THREE.PointLight();
+light.position.set(0, 0, 2);
+scene.add(light);
 
 new OrbitControls(camera, renderer.domElement);
 
-const orbGeo = new THREE.IcosahedronGeometry(1, 2);
+const loader = new THREE.CubeTextureLoader();
+const urls = [
+  '../../textures/cube/Bridge2/posx.jpg',
+  '../../textures/cube/Bridge2/negx.jpg',
+  '../../textures/cube/Bridge2/posy.jpg',
+  '../../textures/cube/Bridge2/negy.jpg',
+  '../../textures/cube/Bridge2/posz.jpg',
+  '../../textures/cube/Bridge2/negz.jpg',
+];
+const worldTexture = loader.load(urls);
+
+const orbGeo = new THREE.IcosahedronGeometry(1, 15);
+// const orbGeo = createBoxWithRoundedEdges(1, 1, 1, 0.2, 30);
+// const orbGeo = new THREE.BoxGeometry(1.4, 1.4, 1.4, 10, 10, 10);
 const shaderMat = new THREE.ShaderMaterial({
   uniforms: {
     uTime: { value: 0 },
+    viewPos: { value: camera.position },
+    worldTexture: { value: worldTexture },
+    objectColor: { value: new THREE.Color(1, 1, 1) },
   },
   vertexShader: vs,
   fragmentShader: fs,
+  // side: 1,
   // wireframe: true,
 });
-const phongMat = new THREE.MeshPhongMaterial({
-  color: 0xcc3344,
+const phongMat = new THREE.MeshStandardMaterial({
+  color: 0xffffff,
+  roughness: 0.7,
+  metalness: 0.3,
   flatShading: true,
-  side: 0,
+  // side: 1,
 });
 
 phongMat.onBeforeCompile = (shader) => {
   const replacement = /* glsl */ `
-    gl_FragColor = vec4(outgoingLight.g, outgoingLight.g, outgoingLight.g, 1.0);
+    gl_FragColor = vec4(outgoingLight.r, outgoingLight.g, outgoingLight.b, 1.0);
   `;
 
   // shader.fragmentShader = shader.fragmentShader.replace(
@@ -61,18 +78,26 @@ phongMat.onBeforeCompile = (shader) => {
   // );
 };
 
+// const orb = new THREE.Mesh(orbGeo, phongMat);
 const orb = new THREE.Mesh(orbGeo, shaderMat);
+// orb.position.set(5, 5, 5);
+// orb.scale.set(2, 2, 1);
 
 scene.add(orb);
+
+// scene.background = worldTexture;
 
 let time = 0;
 
 const render = () => {
   renderer.render(scene, camera);
 
-  time += 0.003;
+  time += 0.03;
 
-  // orb.rotation.y += 0.01;
+  // orb.material.uniforms.viewPos.value = camera.position;
+  orb.material.uniforms.uTime.value = time;
+
+  // orb.rotation.y += 0.015;
 
   requestAnimationFrame(render);
 };
@@ -98,11 +123,7 @@ function saveAsImage() {
     var strMime = 'image/jpeg';
     var imgData = renderer.domElement.toDataURL(strMime);
 
-    var scripts = document.getElementsByTagName('script');
-    var lastScript = scripts[scripts.length - 1];
-    var scriptName = new URL(lastScript.src).pathname.slice(1, -3);
-
-    saveFile(imgData.replace(strMime, strDownloadMime), scriptName + '.jpg');
+    saveFile(imgData.replace(strMime, strDownloadMime), 'sketch.jpg');
   } catch (e) {
     console.log(e);
     return;
@@ -120,5 +141,7 @@ var saveFile = function (strData, filename) {
     location.replace(uri);
   }
 };
+
+// noisify(orb, 10);
 
 render();

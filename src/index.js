@@ -21,7 +21,7 @@ const addSketch = (page) => {
   });
 
   const image = document.createElement('img');
-  image.src = '/images/' + page + '.jpg';
+  image.src = `${PUBLIC_URL}/images/${page}.jpg`;
   image.style.width = '100%';
 
   a.appendChild(image);

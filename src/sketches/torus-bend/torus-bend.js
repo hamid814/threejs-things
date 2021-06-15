@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import vs from './vert.glsl';
+import noiseVS from './noise.vert.glsl';
 import fs from './frag.glsl';
 
 const canvas = document.getElementById('webgl');
@@ -40,19 +41,20 @@ const torusMat = new THREE.ShaderMaterial({
     uTime: { value: 0 },
     totalP: { value: p },
   },
-  vertexShader: /* glsl */ `
-    attribute vec3 aCenter;
+  // vertexShader: /* glsl */ `
+  //   attribute vec3 aCenter;
 
-    varying vec2 vUv;
-    varying vec3 vCenter;
-  
-    void main() {
-      vUv = uv;
-      vCenter = aCenter;
-      
-      gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
-    }
-  `,
+  //   varying vec2 vUv;
+  //   varying vec3 vCenter;
+
+  //   void main() {
+  //     vUv = uv;
+  //     vCenter = aCenter;
+
+  //     gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
+  //   }
+  // `,
+  vertexShader: noiseVS,
   fragmentShader: fs,
   side: 2,
 });

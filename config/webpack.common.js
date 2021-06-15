@@ -55,7 +55,7 @@ module.exports = {
     }),
     new ImageminPlugin({
       minimizerOptions: {
-        plugins: [['mozjpeg', { progressive: true, quality: 25 }]],
+        plugins: [['mozjpeg', { progressive: true, quality: 40 }]],
       },
     }),
     new HTMLWebPackPlugin({
