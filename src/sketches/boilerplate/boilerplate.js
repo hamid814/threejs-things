@@ -59,11 +59,7 @@ function saveAsImage() {
     var strMime = 'image/jpeg';
     var imgData = renderer.domElement.toDataURL(strMime);
 
-    var scripts = document.getElementsByTagName('script');
-    var lastScript = scripts[scripts.length - 1];
-    var scriptName = new URL(lastScript.src).pathname.slice(1, -3);
-
-    saveFile(imgData.replace(strMime, strDownloadMime), scriptName + '.jpg');
+    saveFile(imgData.replace(strMime, strDownloadMime), 'sketch.jpg');
   } catch (e) {
     console.log(e);
     return;
