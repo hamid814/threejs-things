@@ -80,7 +80,8 @@ void main() {
     vec3 rayDirection = normalize(p.x * uu + p.y * vv + 3. * ww);
     vec3 rayDirectionLocal = ntransform(scene.worldToLocal, rayDirection);
   
-    power += trace(rayOriginLocal, rayDirectionLocal);
+    power += 1.0;
+    power -= trace(rayOriginLocal, rayDirectionLocal);
   
     #if AA > 1
   }

@@ -25,6 +25,7 @@ function init() {
     canvas: document.getElementById('webgl'),
   });
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0xffffff);
   document.body.prepend(renderer.domElement);
 
   // camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1);
@@ -87,7 +88,7 @@ function render(time) {
   refractionPower += 0.1 * (f - refractionPower);
 
   // mesh.material.uniforms.angle.value = angle;
-  mesh.material.uniforms.morphPower.value = 0.999;
+  mesh.material.uniforms.morphPower.value = 0.9;
   // mesh.material.uniforms.lightChannelDelta.value = 0.0;
   // mesh.material.uniforms.refractionPower.value = 0.8;
 

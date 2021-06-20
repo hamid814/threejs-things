@@ -563,29 +563,26 @@ void main() {
 
   vec3 rayOriginLocal = ptransform(scene.worldToLocal, rayOrigin);
 
-  
-      // scene.light[0] = vec3(.0,  2., -.02);
-      // scene.light[1] = vec3(.02, -2., -.0);
-      scene.light[0] = vec3(.2,  2., -.8);
-      scene.light[1] = vec3(.2, -2., -.8);
-      vec3 dir;
+  scene.light[0] = vec3(.2,  2., -.8);
+  scene.light[1] = vec3(.2, -2., -.8);
+  vec3 dir;
     
-    scene.light[0] = scene.light[0].x * uu + scene.light[0].y * vv + scene.light[0].z * ww;
-    scene.light[0] = ptransform(scene.worldToLocal, scene.light[0]);
-    dir = normalize(-scene.light[0]);
-    scene.projectedLight[0] = scene.light[0] + dir * roundedboxIntersectModified(scene.light[0], dir, scene.outerSize, scene.outerRadius);
-    
-    scene.light[1] = scene.light[1].x * uu + scene.light[1].y * vv + scene.light[1].z * ww;
-    scene.light[1] = ptransform(scene.worldToLocal, scene.light[1]);
-    dir = normalize(-scene.light[1]);
-    scene.projectedLight[1] = scene.light[1] + dir * roundedboxIntersectModified(scene.light[1], dir, scene.outerSize, scene.outerRadius);
-    
-    vec2 p = (2. * gl_FragCoord.xy - resolution) / resolution.y;
+  scene.light[0] = scene.light[0].x * uu + scene.light[0].y * vv + scene.light[0].z * ww;
+  scene.light[0] = ptransform(scene.worldToLocal, scene.light[0]);
+  dir = normalize(-scene.light[0]);
+  scene.projectedLight[0] = scene.light[0] + dir * roundedboxIntersectModified(scene.light[0], dir, scene.outerSize, scene.outerRadius);
   
-    vec3 rayDirection = normalize(p.x * uu + p.y * vv + 3. * ww);
-    vec3 rayDirectionLocal = ntransform(scene.worldToLocal, rayDirection);
-  
-    power += trace(rayOriginLocal, rayDirectionLocal);
+  scene.light[1] = scene.light[1].x * uu + scene.light[1].y * vv + scene.light[1].z * ww;
+  scene.light[1] = ptransform(scene.worldToLocal, scene.light[1]);
+  dir = normalize(-scene.light[1]);
+  scene.projectedLight[1] = scene.light[1] + dir * roundedboxIntersectModified(scene.light[1], dir, scene.outerSize, scene.outerRadius);
+    
+  vec2 p = (2. * gl_FragCoord.xy - resolution) / resolution.y;
+
+  vec3 rayDirection = normalize(p.x * uu + p.y * vv + 3. * ww);
+  vec3 rayDirectionLocal = ntransform(scene.worldToLocal, rayDirection);
+
+  power += trace(rayOriginLocal, rayDirectionLocal);
 
   power = clamp(power, 0., 1.);
 

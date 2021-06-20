@@ -2,8 +2,9 @@
 #define MAX_DIST 100.
 #define SURF_DIST .001
 #define IOR 1.45
-#define LCD 0.1 // light channel delta
+#define LCD 0.02 // light channel delta
 
+uniform mat4 worldToCamera;
 uniform vec3 camPos;
 uniform vec2 resolution;
 uniform float uTime;
@@ -15,38 +16,58 @@ vec3 box1Pos = vec3(0.);
 vec3 box1Size = vec3(1.);
 
 // diffuse light
-float diffusePower = 1.0;
+float diffusePower = 0.1;
 // glass
-vec3 glassColor = vec3(0.3, 0.2, 0.1);
-// light
-vec3 lightPos = vec3(0.5, 0.1, 10.0);
+vec3 glassColor = vec3(0.8, 0.04, 0.02);
+// lights
+vec3[2] lights;
 
 mat2 rotate(float a) {
   float s=sin(a), c=cos(a);
   return mat2(c, -s, s, c);
 }
 
+float sdPlane( vec3 p ){
+  // p.xz *= Rot(uTime);
+  float d = dot(p, normalize(vec3(0.0, 0.0, -1.0)));
+
+  return d;
+}
+
 float sdBox(vec3 point, vec3 position, vec3 size) {
-  point -= position;
+  // point.xz *= rotate(uTime / 3.0);
+  // point.xy *= rotate(3.1415 * 0.25);
   point = abs(point) - size;
-  float morphAmount = 0.25;
-  // float morphAmount = 0.0;
+  float morphAmount = 0.1;
   return length(max(point, 0.))+min(max(point.x, max(point.y, point.z)), 0.) - morphAmount;
 }
 
 float getDist(vec3 point) {
+  point.x *= -1.0;
+  point *= mat3(worldToCamera);
   float box1 = sdBox(point, box1Pos, box1Size);
+  // box1 = abs(box1) - 0.2;
+  // float plane = sdPlane(point);
 
   return box1;
 }
 
-float getDiffuseLight(vec3 point, vec3 normal, vec3 light) {
-  vec3 lightDir = normalize(light - point);
+float getDiffuseLight(vec3 point, vec3 normal, int lightIndex) {
+  vec3 lightDir = normalize(lights[lightIndex] - point);
   float diffuse = dot(normal, lightDir);
-  // diffuse = (diffuse + 1.0) / 2.0;
   diffuse = max(0.0, diffuse);
   diffuse *= diffusePower;
   return diffuse;
+}
+
+float getSpecularLight(vec3 rayOrigin, vec3 point, vec3 normal, int lightIndex) {
+  vec3 viewDir = normalize(rayOrigin - point);
+  vec3 reflectDir = reflect(lights[lightIndex], normal);
+  reflectDir = normalize(reflectDir);
+  float specular = dot(viewDir, -reflectDir);
+  specular = max(0.0, specular);
+  specular = pow(specular, 256.0);
+  return specular;
 }
 
 float rayMarch(vec3 ro, vec3 rd, float sign) {
@@ -89,15 +110,17 @@ void main() {
   vec2 uv = vUv - 0.5;
   uv.x *= ratio;
 
-  vec3 rayOrigin = camPos;
-  vec3 rayDirection = getRayDir(uv, camPos, vec3(0.), 1.);
+  vec3 cameraPos = vec3(0.0, 0.0, -5.0);
+  
+  vec3 rayOrigin = cameraPos;
+  vec3 rayDirection = getRayDir(uv, cameraPos, vec3(0.), 1.);
   rayDirection = normalize(rayDirection);
 
   // get light always behind the camera
-  lightPos = getRayDir(vec2(0.0, 0.0), camPos, -camPos, 1.0);
-  // lightPos = getRayDir(vec2(0.0, 0.1), camPos, vec3(0.), -1.0);
-  // lightPos = vec3(5.0, 5.0, 5.0);
-  // lightPos = camPos;
+  vec3 light0Dir = getRayDir(vec2( 1.0,  4.0), cameraPos, vec3(0.), -1.0);
+  vec3 light1Dir = getRayDir(vec2(-1.0, -4.0), cameraPos, vec3(0.), -1.0);
+  lights[0] = rayOrigin + light0Dir;
+  lights[1] = rayOrigin + light1Dir;
 
   float dist = rayMarch(rayOrigin, rayDirection, 1.);
 
@@ -107,9 +130,43 @@ void main() {
     vec3 point = rayOrigin + rayDirection * dist;
     vec3 normal = getNormal(point);
 
-    color += getDiffuseLight(point, normal, lightPos);
+    // diffuse light
+    color += getDiffuseLight(point, normal, 0);
+
+    // specular light
+    color += getSpecularLight(rayOrigin, point, normal, 0);
+    color += getSpecularLight(rayOrigin, point, normal, 1);
+
+    vec3 rfr, pointStart;
+    vec3 initialPoint = point;
+    vec3 initialNormal = normal;
+
+    // refraction enter
+    rfr = refract(rayDirection, initialNormal, 1.0 / IOR);
+    rfr = normalize(rfr);
+    // if(dot(rfr, rfr) == 0.0) rfr = reflect(rayDirection, normal);
+    pointStart = initialPoint + SURF_DIST * 3.0;
+    dist = rayMarch(pointStart, rfr, -1.0);
+    point = pointStart + rfr * dist;
+    normal = -getNormal(point);
+    color += getSpecularLight(pointStart, point, normal, 0);
+    color += getSpecularLight(pointStart, point, normal, 1);
+
+
+    // refract the ray inside
+    // rfr = refract(rfr, normal, 1.0/IOR);
+    // rfr = normalize(rfr);
+    // if(dot(rfr, rfr) == 0.0) rfr = reflect(rayDirection, normal);
+    // pointStart = point - SURF_DIST * 3.0;
+    // dist = rayMarch(pointStart, rfr, -1.0);
+    // point = pointStart + rfr * dist;
+    // normal = -getNormal(point);
+    // color += getSpecularLight(pointStart, point, normal);
   }
-  // color *= glassColor;
+
+  // color *= glassColor; // glass color
+  // color = pow(color, vec3(0.4545)); // gamma correction
+  // color = mix(vec3(1.), color, color);
   
   gl_FragColor = vec4(color, 1.0);
 }

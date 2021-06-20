@@ -1,6 +1,6 @@
 import lights from './lights';
 
-const e = 2;
+const e = 4;
 const n = 0.8;
 
 const o = /* glsl */ `
@@ -24,22 +24,6 @@ const i = /* glsl */ `
       vec3 refractionR = refract(rayDirection, nor, refractionPowerR);
       vec3 refractionG = refract(rayDirection, nor, refractionPower);
       vec3 refractionB = refract(rayDirection, nor, refractionPowerB);
-      float ir = traceInner${e}(pos, refractionR, refractionPowerR, rayFromOutside);
-      float ib = traceInner${e}(pos, refractionG, refractionPower,  rayFromOutside);
-      float ig = traceInner${e}(pos, refractionB, refractionPowerB, rayFromOutside);
-      power.r += ir > 0. ? ir : traceOuter${
-        e - 1
-      }(pos + refractionR * rayFromInside.x, -refractionR, refractionPowerR, rayFromInside);
-      power.g += ig > 0. ? ig : traceOuter${
-        e - 1
-      }(pos + refractionG * rayFromInside.x, -refractionG, refractionPower , rayFromInside);
-      power.b += ib > 0. ? ib : traceOuter${
-        e - 1
-      }(pos + refractionB * rayFromInside.x, -refractionB, refractionPowerB, rayFromInside);
-
-      power.r = traceInner${e}(pos, refractionR, refractionPowerR, rayFromOutside);
-      power.g = traceInner${e}(pos, refractionG, refractionPower,  rayFromOutside);
-      power.b = traceInner${e}(pos, refractionB, refractionPowerB, rayFromOutside);
 
       power.r = traceOuter${
         e - 1

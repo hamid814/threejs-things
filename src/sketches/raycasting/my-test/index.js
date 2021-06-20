@@ -5,7 +5,7 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import vs from './vert.glsl';
 // import fs from './frag.glsl';
 import fs from './my-frag.glsl';
-import fullFrag from './full.glsl';
+import fullFrag from './full-test';
 import finalFrag from './final.frag.glsl';
 import testFrag from './test.frag.glsl';
 
@@ -41,12 +41,13 @@ const pass = new ShaderPass({
     uTime: { value: 0 },
     resolution: { value: { x: innerWidth, y: innerHeight } },
     camPos: { value: camera.position },
+    worldToCamera: { value: camera.matrixWorld },
   },
   vertexShader: vs,
   // fragmentShader: finalFrag,
-  fragmentShader: testFrag,
+  // fragmentShader: testFrag,
   // fragmentShader: fs,
-  // fragmentShader: fullFrag,
+  fragmentShader: fullFrag,
 });
 
 composer.addPass(pass);
@@ -61,6 +62,7 @@ function render() {
 
   pass.uniforms.uTime.value = time;
   pass.uniforms.camPos.value = camera.position;
+  pass.uniforms.worldToCamera.value = camera.matrixWorld;
 
   requestAnimationFrame(render);
 }
