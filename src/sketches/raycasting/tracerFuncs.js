@@ -16,7 +16,7 @@ const i = /* glsl */ `
     vec3 power = vec3(0., 0., 0.);
     float d = roundedboxIntersectModified(rayOrigin, rayDirection, scene.outerSize, scene.outerRadius);
     if (d < 1e14) {
-        vec3 pos = rayOrigin + rayDirection * d;
+      vec3 pos = rayOrigin + rayDirection * d;
       vec3 nor = roundedboxNormal(pos, scene.outerSize, scene.outerRadius);
       
       float refractionPowerR = refractionPower + lightChannelDelta;

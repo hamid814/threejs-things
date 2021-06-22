@@ -44,10 +44,10 @@ const pass = new ShaderPass({
     worldToCamera: { value: camera.matrixWorld },
   },
   vertexShader: vs,
-  // fragmentShader: finalFrag,
+  fragmentShader: finalFrag,
   // fragmentShader: testFrag,
   // fragmentShader: fs,
-  fragmentShader: fullFrag,
+  // fragmentShader: fullFrag,
 });
 
 composer.addPass(pass);

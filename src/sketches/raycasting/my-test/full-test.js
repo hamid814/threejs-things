@@ -1,6 +1,7 @@
 import helpers from './full-helpers';
 
 export default /* glsl */ `
+#define AA 1
 #define MAX_STEPS 100
 #define MAX_DIST 100.
 #define SURF_DIST .001
@@ -13,7 +14,7 @@ varying vec2 vUv;
 
 float refractionPower = 0.77;
 float lightChannelDelta = 0.02;
-float morphPower = 0.02;
+float morphPower = 0.2;
 vec3 lights[2];
 vec3 projectedLights[2];
 
@@ -40,8 +41,9 @@ mat2 rotate(float angle) {
 }
 
 float sdBox(vec3 point, vec3 position, vec3 size) {
-  point.xz *= rotate(uTime / 3.0);
-  point.xy *= rotate(3.1415 * 0.25);
+  // point.xz *= rotate(uTime / 3.0);
+  // point.xy *= rotate(3.1415 * 0.25);
+  point += position;
   point = abs(point) - size;
   float morphAmount = morphPower;
   return length(max(point, 0.))+min(max(point.x, max(point.y, point.z)), 0.) - morphAmount;
@@ -60,6 +62,7 @@ float getDist(vec3 point) {
 }
 
 float rayMarch(vec3 ro, vec3 rd, float sign) {
+  // rd = normalize(rd);
   float dO=0.;
     
   for(int i=0; i<MAX_STEPS; i++) {
@@ -328,46 +331,52 @@ vec3 trace(vec3 rayOrigin, vec3 rayDirection) {
 
 void main() {
   float ratio = resolution.x / resolution.y;
-  vec2 uv = vUv - 0.5;
-  uv.x *= ratio;
-  
+  // vec2 uv = vUv - 0.5;
   vec3 power = vec3(0.);
 
   // ray origin
   vec3 ro = camPos;
-  // vec3 ro = vec3(0.0, 0.0, 15.0);
   vec3 ww = normalize(-ro);
   vec3 camForward = normalize(-ro);
   vec3 uu = normalize(cross(ww, vec3(0., 1., 0.)));
   vec3 camRight = normalize(cross(camForward, vec3(0.0, 1.0, 0.0)));
   vec3 vv = cross(uu, ww);
   vec3 camUp = normalize(cross(camRight, camForward));
+
+  lights[0] = vec3(.2, 2., -.8);
+  lights[1] = vec3(-.2, -2., -.8);
+  vec3 dir;
+
+  lights[0] = ro + lights[0].x * camRight + lights[0].y * camUp;
+  // lights[0] = lights[0].x * uu + lights[0].y * vv + lights[0].z * ww;
+  dir = normalize(-lights[0]);
+  projectedLights[0] = lights[0] + dir * rayMarch(lights[0], dir, 1.0);
+
+  lights[1] = ro + lights[1].x * camRight + lights[1].y * camUp;
+  // lights[1] = lights[1].x * uu + lights[1].y * vv + lights[1].z * ww;
+  dir = normalize(-lights[1]);
+  projectedLights[1] = lights[1] + dir * rayMarch(lights[1], dir, 1.0);
+
+  #if AA > 1
+    for(int m = 0; m < AA; m++)
+    for(int n = 0; n < AA; n++)
+    {
+      vec2 aadiff = vec2(float(m), float(n)) / float(AA) - 0.0;
+      // 0 0 => (0, 0) / 2 - 0.5 => (-0.5, -0.5)
+      // 0 1 => (0, 1) / 2 - 0.5 => (-0.5,  0.0)
+      // 1 0 => (1, 0) / 2 - 0.5 => ( 0.0, -0.5)
+      // 1 1 => (1, 1) / 2 - 0.5 => ( 0.0,  0.0)
+      vec2 uv = (gl_FragCoord.xy + aadiff) / resolution - 0.5;
+  #else
+    vec2 uv = gl_FragCoord.xy / resolution - 0.5;
+  #endif
+  uv.x *= ratio; 
   
   // ray direction
   vec3 rd = getCameraRayDir(uv, ro, vec3(0.), 1.);
   // vec3 rd = normalize(uv.x * uu + uv.y * vv + 3. * ww);
 
   float d = rayMarch(ro, rd, 1.);
-
-  lights[0] = vec3(.2, 2., -.8);
-  // lights[0] = vec3(.2, 1., -.8);
-  lights[1] = vec3(-.2, -2., -.8);
-  // lights[1] = vec3(-.2, -1., -.8);
-  vec3 dir;
-
-  lights[0] = ro + lights[0].x * camRight + lights[0].y * camUp;
-  // lights[0] = lights[0].x * uu + lights[0].y * vv + lights[0].z * ww;
-  // lights[0] = ptransform(worldToLocal, lights[0]);
-  dir = normalize(-lights[0]);
-  projectedLights[0] = lights[0] + dir * rayMarch(lights[0], dir, 1.0);
-  // projectedLights[0] = lights[0];
-
-  lights[1] = ro + lights[1].x * camRight + lights[1].y * camUp;
-  // lights[1] = lights[1].x * uu + lights[1].y * vv + lights[1].z * ww;
-  // lights[1] = ptransform(worldToLocal, lights[1]);
-  dir = normalize(-lights[1]);
-  projectedLights[1] = lights[1] + dir * rayMarch(lights[1], dir, 1.0);
-  // projectedLights[1] = lights[1];
 
   if(d < MAX_DIST) {
     vec3 p = ro + rd * d;
@@ -391,6 +400,10 @@ void main() {
     // diff = smoothstep(0.999, 1.0, diff);
     // power += diff;
   }
+  #if AA > 1
+    }
+    power /= float(AA * AA);
+  #endif
 
   power *= glassColor;
   power = pow(power, vec3(0.4545));

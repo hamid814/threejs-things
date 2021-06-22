@@ -25,7 +25,7 @@ function init() {
     canvas: document.getElementById('webgl'),
   });
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setClearColor(0xffffff);
+  // renderer.setClearColor(0xffffff);
   document.body.prepend(renderer.domElement);
 
   // camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1);
