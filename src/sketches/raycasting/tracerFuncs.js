@@ -1,6 +1,6 @@
 import lights from './lights';
 
-const e = 4;
+const e = 6;
 const n = 0.8;
 
 const o = /* glsl */ `

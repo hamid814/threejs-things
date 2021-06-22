@@ -81,7 +81,9 @@ void main() {
     vec3 rayDirectionLocal = ntransform(scene.worldToLocal, rayDirection);
   
     power += 1.0;
-    power -= trace(rayOriginLocal, rayDirectionLocal);
+    power.r -= trace(rayOriginLocal, rayDirectionLocal).r * 0.1;
+    power.g -= trace(rayOriginLocal, rayDirectionLocal).r * 0.6;
+    power.b -= trace(rayOriginLocal, rayDirectionLocal).r * 0.8;
   
     #if AA > 1
   }
