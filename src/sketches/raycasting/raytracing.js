@@ -43,7 +43,7 @@ ${tracerFuncs()}
 void main() {
   scene.localToWorld = rotateBox(normalize(vec3(0., 0., 1.)), ${
     0.25 * Math.PI
-  }); 
+  } * 0.0);
   scene.worldToLocal = inverse(scene.localToWorld);
 
   float innerFactor = mix(.5, .375, morphPower);
@@ -80,7 +80,7 @@ void main() {
     vec3 rayDirection = normalize(p.x * uu + p.y * vv + 3. * ww);
     vec3 rayDirectionLocal = ntransform(scene.worldToLocal, rayDirection);
   
-    power -= 1.0;
+    // power += 1.0;
     power += trace(rayOriginLocal, rayDirectionLocal);
     // power.r -= trace(rayOriginLocal, rayDirectionLocal).r * 0.1;
     // power.g -= trace(rayOriginLocal, rayDirectionLocal).r * 0.6;

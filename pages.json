@@ -2,6 +2,7 @@
   "pages": [
     "light-shader",
     "test",
-    "raycasting"
+    "raycasting",
+    "test_raycasting"
   ]
 }

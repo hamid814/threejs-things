@@ -8,6 +8,9 @@ import fs from './my-frag.glsl';
 import fullFrag from './full-test';
 import finalFrag from './final.frag.glsl';
 import testFrag from './test.frag.glsl';
+import vectorFrag from './vector.frag.glsl';
+
+let pass;
 
 const canvas = document.getElementById('webgl');
 
@@ -27,27 +30,33 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   10
 );
-camera.position.set(0, 0, 6);
+camera.position.set(0, 0, 4.5);
 camera.lookAt(0, 0, 0);
-
-// scene.add(new THREE.AxesHelper());
 
 new OrbitControls(camera, renderer.domElement);
 
+const loader = new THREE.TextureLoader();
+const img = loader.load('../../../textures/pearl/pearl.jpg', (t) => {
+  pass.uniforms.bg.value = t;
+  render();
+});
+
 const composer = new EffectComposer(renderer);
 
-const pass = new ShaderPass({
+pass = new ShaderPass({
   uniforms: {
     uTime: { value: 0 },
     resolution: { value: { x: innerWidth, y: innerHeight } },
     camPos: { value: camera.position },
     worldToCamera: { value: camera.matrixWorld },
+    bg: { value: img },
   },
   vertexShader: vs,
   fragmentShader: finalFrag,
   // fragmentShader: testFrag,
   // fragmentShader: fs,
   // fragmentShader: fullFrag,
+  // fragmentShader: vectorFrag,
 });
 
 composer.addPass(pass);
@@ -67,7 +76,7 @@ function render() {
   requestAnimationFrame(render);
 }
 
-render();
+// render();
 
 window.addEventListener('resize', function () {
   renderer.setSize(window.innerWidth, window.innerHeight);

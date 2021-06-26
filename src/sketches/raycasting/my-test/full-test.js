@@ -14,14 +14,14 @@ varying vec2 vUv;
 
 float refractionPower = 0.77;
 float lightChannelDelta = 0.02;
-float morphPower = 0.2;
+float morphPower = 0.1;
 vec3 lights[2];
 vec3 projectedLights[2];
 
 vec3 glassColor = vec3(1.);
 float reflectionEffectPower = 0.1;
-float diff1from = 0.995;
-float diff2from = 0.995;
+float diff1from = 0.97;
+float diff2from = 0.9;
 
 struct Scene {
   vec3 outerSize;
@@ -41,24 +41,39 @@ mat2 rotate(float angle) {
 }
 
 float sdBox(vec3 point, vec3 position, vec3 size) {
-  // point.xz *= rotate(uTime / 3.0);
-  // point.xy *= rotate(3.1415 * 0.25);
   point += position;
+  // point.yz *= rotate(3.1415 * 0.25);
+  // point.xz *= rotate(uTime);
   point = abs(point) - size;
   float morphAmount = morphPower;
   return length(max(point, 0.))+min(max(point.x, max(point.y, point.z)), 0.) - morphAmount;
 }
 
-float sdSphere( vec3 p, float s )
+float sdSphere( vec3 p, float s, vec3 pos )
 {
+  p += pos;
   return length( p ) - s;
+}
+
+float sdPlane(vec3 p) {
+  // p.xz *= Rot(uTime);
+  float d = dot(p, normalize(vec3(0.0, 0.0, 1.0)));
+
+  return d;
 }
 
 float getDist(vec3 point) {
   float box = sdBox(point, vec3(0.), vec3(1.));
-  // float s = sdSphere(point, 1.0);
-
   return box;
+  // float box = sdBox(point, vec3(2.0, 0.0, 0.0), vec3(1.));
+  // float s = sdSphere(point, 1.4, vec3(2.0, 0.0, 0.0));
+  // float one = max(s, box);
+
+  // float box2 = sdBox(point, vec3(-2.0, 0.0, 0.0), vec3(1.));
+  // box2 = abs(box2) - 0.2;
+  // float p = sdPlane(point);
+  // float two = max(p, box2);
+  // return min(one, two);
 }
 
 float rayMarch(vec3 ro, vec3 rd, float sign) {
@@ -96,9 +111,6 @@ vec3 getCameraRayDir(vec2 uv, vec3 camPos, vec3 camTarget, float zoom) {
 
   return normalize(dir);
 }
-
-// vec4 rayFromInside = vec4(10., -1., 0., 1.);
-vec4 rayFromInside = vec4(10., -1., 0., 1.);
 
 float traceOuter1(vec3 rayOrigin, vec3 rayDirection, float eta) {
   rayDirection = normalize(rayDirection);
@@ -156,7 +168,7 @@ float traceOuter2(vec3 rayOrigin, vec3 rayDirection, float eta) {
     float refractedLight = (smoothstep(.0, 1., refractedLights[0]) + smoothstep(.0, 1., refractedLights[1]));
     power += refractedLight;
 
-    power += traceOuter1(pos + rayFromInside.x * reflection, -reflection, eta) * reflectionEffectPower;
+    power += traceOuter1(pos + reflection, -reflection, eta) * reflectionEffectPower;
   }
 
   return power;
@@ -188,7 +200,7 @@ float traceOuter3(vec3 rayOrigin, vec3 rayDirection, float eta) {
     float refractedLight = (smoothstep(.0, 1., refractedLights[0]) + smoothstep(.0, 1., refractedLights[1]));
     power += refractedLight;
 
-    power += traceOuter2(pos + rayFromInside.x * reflection, -reflection, eta) * reflectionEffectPower;
+    power += traceOuter2(pos + reflection, -reflection, eta) * reflectionEffectPower;
   }
   return power;
 }
@@ -219,7 +231,7 @@ float traceOuter4(vec3 rayOrigin, vec3 rayDirection, float eta) {
     float refractedLight = (smoothstep(.0, 1., refractedLights[0]) + smoothstep(.0, 1., refractedLights[1]));
     power += refractedLight;
 
-    power += traceOuter3(pos + rayFromInside.x * reflection, -reflection, eta) * reflectionEffectPower;
+    power += traceOuter3(pos + reflection, -reflection, eta) * reflectionEffectPower;
   }
   return power;
 }
@@ -250,7 +262,7 @@ float traceOuter5(vec3 rayOrigin, vec3 rayDirection, float eta) {
     float refractedLight = (smoothstep(.0, 1., refractedLights[0]) + smoothstep(.0, 1., refractedLights[1]));
     power += refractedLight;
 
-    power += traceOuter4(pos + rayFromInside.x * reflection, -reflection, eta) * reflectionEffectPower;
+    power += traceOuter4(pos + reflection, -reflection, eta) * reflectionEffectPower;
   }
   return power;
 }
@@ -272,9 +284,9 @@ vec3 trace(vec3 rayOrigin, vec3 rayDirection) {
     // vec3 refractionG = refract(rayDirection, nor, refractionPower);
     // vec3 refractionB = refract(rayDirection, nor, refractionPowerB);
 
-    // power.r = traceOuter5(pos + refractionR * rayFromInside.x, -refractionR, refractionPowerR);
-    // power.g = traceOuter5(pos + refractionG * rayFromInside.x, -refractionG, refractionPower);
-    // power.b = traceOuter5(pos + refractionB * rayFromInside.x, -refractionB, refractionPowerB);
+    // power.r = traceOuter5(pos + refractionR, -refractionR, refractionPowerR);
+    // power.g = traceOuter5(pos + refractionG, -refractionG, refractionPower);
+    // power.b = traceOuter5(pos + refractionB, -refractionB, refractionPowerB);
   }
 
   return power;
@@ -348,24 +360,20 @@ void main() {
   vec3 dir;
 
   lights[0] = ro + lights[0].x * camRight + lights[0].y * camUp;
-  // lights[0] = lights[0].x * uu + lights[0].y * vv + lights[0].z * ww;
   dir = normalize(-lights[0]);
   projectedLights[0] = lights[0] + dir * rayMarch(lights[0], dir, 1.0);
+  projectedLights[0] = lights[0];
 
   lights[1] = ro + lights[1].x * camRight + lights[1].y * camUp;
-  // lights[1] = lights[1].x * uu + lights[1].y * vv + lights[1].z * ww;
   dir = normalize(-lights[1]);
   projectedLights[1] = lights[1] + dir * rayMarch(lights[1], dir, 1.0);
+  projectedLights[1] = lights[1];
 
   #if AA > 1
     for(int m = 0; m < AA; m++)
     for(int n = 0; n < AA; n++)
     {
       vec2 aadiff = vec2(float(m), float(n)) / float(AA) - 0.0;
-      // 0 0 => (0, 0) / 2 - 0.5 => (-0.5, -0.5)
-      // 0 1 => (0, 1) / 2 - 0.5 => (-0.5,  0.0)
-      // 1 0 => (1, 0) / 2 - 0.5 => ( 0.0, -0.5)
-      // 1 1 => (1, 1) / 2 - 0.5 => ( 0.0,  0.0)
       vec2 uv = (gl_FragCoord.xy + aadiff) / resolution - 0.5;
   #else
     vec2 uv = gl_FragCoord.xy / resolution - 0.5;
@@ -388,17 +396,9 @@ void main() {
     vec3 refractionG = refract(rd, n, refractionPower);
     vec3 refractionB = refract(rd, n, refractionPowerB);
 
-    power.r = traceOuter5(p + refractionR * rayFromInside.x, -refractionR, refractionPowerR);
-    power.g -= traceOuter5(p + refractionG * rayFromInside.x, -refractionG, refractionPower);
-    power.b -= traceOuter5(p + refractionB * rayFromInside.x, -refractionB, refractionPowerB);
-
-    // float diff;
-    // diff = dot(n, normalize(lights[0] - p));
-    // diff = smoothstep(0.999, 1.0, diff);
-    // power += diff;
-    // diff = dot(n, normalize(lights[1] - p));
-    // diff = smoothstep(0.999, 1.0, diff);
-    // power += diff;
+    power.r += traceOuter5(p + refractionR * 0.1, -refractionR, refractionPowerR);
+    power.g += traceOuter5(p + refractionG * 0.1, -refractionG, refractionPower);
+    power.b += traceOuter5(p + refractionB * 0.1, -refractionB, refractionPowerB);
   }
   #if AA > 1
     }
@@ -406,7 +406,7 @@ void main() {
   #endif
 
   power *= glassColor;
-  power = pow(power, vec3(0.4545));
+  // power = pow(power, vec3(0.4545));
 
   gl_FragColor = vec4(power, 1.0);
 }
