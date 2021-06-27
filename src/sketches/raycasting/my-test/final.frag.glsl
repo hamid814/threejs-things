@@ -1,9 +1,11 @@
+#pragma glslify: noise = require(../../../glsl-util/perlin/3d)
+
 #define MAX_STEPS 100
 #define MAX_DIST 100.
 #define SURF_DIST .001
 #define IOR 1.45
 #define LCD 0.01
-#define RFL_STEPS 5
+#define RFL_STEPS 4
 #define AA 1
 
 uniform samplerCube bg;
@@ -38,29 +40,32 @@ float sdPlane(vec3 p) {
   return d;
 }
 float sdBox(vec3 point, vec3 position, vec3 size) {
-  // point.xz *= rotate(uTime / 1.0);
+  // point.xz *= rotate(uTime);
   // point.xy *= rotate(3.1415 * 0.25);
   point += position;
   point = abs(point) - size;
-  float morphAmount = -0.37;
+  // float morphAmount = -0.37;
+  float morphAmount = 0.1;
   return length(max(point, 0.)) + min(max(point.x, max(point.y, point.z)), 0.) - morphAmount;
 }
 float sdSphere(vec3 p, float s) {
   return length(p) - s;
 }
 float getDist(vec3 point) {
-  float box = sdBox(point, vec3(0.), vec3(1.));
-  box = abs(box) - 0.4;
+  float box = sdBox(point, vec3(0.), vec3(1.5, 0.3, 0.3));
+  // box = abs(box) - 0.4;
   // float prism = sdHexPrism(point, vec2(1.5));
   // prism = abs(prism) - 0.1;
   // float plane = sdPlane(point);
   // float s = sdSphere(point, 1.5);
+  // float sphere = sdSphere(point, 1.0);
+  // sphere += noise(point * 1.0) - 0.2;
 
   return box;
+  // return sphere * 0.4;
   // return max(plane, prism);
 }
 float rayMarch(vec3 ro, vec3 rd, float sign) {
-  // rd = normalize(rd);
   float dO = 0.;
 
   for(int i = 0; i < MAX_STEPS; i++) {
@@ -88,6 +93,11 @@ void rotateLights(vec3 rayOrigin, vec3 camRight, vec3 camUp, vec3 camForward) {
 
   projectedLights[0] = lights[0] + normalize(-lights[0]) * rayMarch(lights[0], normalize(-lights[0]), 1.0) * 0.95;
   projectedLights[1] = lights[1] + normalize(-lights[1]) * rayMarch(lights[1], normalize(-lights[1]), 1.0) * 0.95;
+}
+
+float getDiffuse(vec3 point, vec3 normal) {
+  // return 1.0;
+  return max(0.0, dot(normalize(lights[0] - point), normal));
 }
 
 float getLight(vec3 ro, vec3 rd) {
@@ -209,7 +219,8 @@ void main() {
         vec3 refractionR = refract(rayDirection, normal, rIOR + LCD);
         vec3 refractionG = refract(rayDirection, normal, rIOR);
         vec3 refractionB = refract(rayDirection, normal, rIOR - LCD);
-        // power += getLight(point + refractionR, refractionR);
+        // power -= getLight(point + refractionR, refractionR);
+        power += getDiffuse(point, normal);
 
         Reflection rflR;
         rflR.power = vec3(0.);
@@ -234,9 +245,9 @@ void main() {
         for(int i = 0; i < RFL_STEPS; i++) {
           rflG = getReflection(rflG, i);
 
-          power -= rflG.power / 2.0;
+          power -= rflG.power;
         }
-        // power *= textureCube(bg, rflG.direction).rgb;
+        power *= textureCube(bg, rflG.direction).rgb;
         // for(int i = 0; i < RFL_STEPS; i++) {
         //   rflB = getReflection(rflB, i);
 

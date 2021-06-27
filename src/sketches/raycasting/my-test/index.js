@@ -42,7 +42,6 @@ const urls = [url, url, url, url, url, url];
 
 const img = loader.load(urls, (t) => {
   pass.uniforms.bg.value = t;
-  console.log(t);
   render();
 });
 
