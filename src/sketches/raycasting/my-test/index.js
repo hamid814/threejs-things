@@ -35,9 +35,14 @@ camera.lookAt(0, 0, 0);
 
 new OrbitControls(camera, renderer.domElement);
 
-const loader = new THREE.TextureLoader();
-const img = loader.load('../../../textures/pearl/pearl.jpg', (t) => {
+const loader = new THREE.CubeTextureLoader();
+
+const url = '../../../textures/pearl/pearl.jpg';
+const urls = [url, url, url, url, url, url];
+
+const img = loader.load(urls, (t) => {
   pass.uniforms.bg.value = t;
+  console.log(t);
   render();
 });
 

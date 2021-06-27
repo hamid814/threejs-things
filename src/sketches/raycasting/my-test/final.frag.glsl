@@ -3,10 +3,10 @@
 #define SURF_DIST .001
 #define IOR 1.45
 #define LCD 0.01
-#define RFL_STEPS 3
-#define AA 2
+#define RFL_STEPS 5
+#define AA 1
 
-uniform sampler2D bg;
+uniform samplerCube bg;
 uniform vec3 camPos;
 uniform vec2 resolution;
 uniform float uTime;
@@ -16,7 +16,7 @@ vec3[2] projectedLights;
 float rIOR = 1.0 / IOR;
 
 struct Reflection {
-  float power;
+  vec3 power;
   vec3 position;
   vec3 direction;
 };
@@ -42,7 +42,7 @@ float sdBox(vec3 point, vec3 position, vec3 size) {
   // point.xy *= rotate(3.1415 * 0.25);
   point += position;
   point = abs(point) - size;
-  float morphAmount = 0.2;
+  float morphAmount = -0.37;
   return length(max(point, 0.)) + min(max(point.x, max(point.y, point.z)), 0.) - morphAmount;
 }
 float sdSphere(vec3 p, float s) {
@@ -50,7 +50,7 @@ float sdSphere(vec3 p, float s) {
 }
 float getDist(vec3 point) {
   float box = sdBox(point, vec3(0.), vec3(1.));
-  // box = abs(box) - 0.4;
+  box = abs(box) - 0.4;
   // float prism = sdHexPrism(point, vec2(1.5));
   // prism = abs(prism) - 0.1;
   // float plane = sdPlane(point);
@@ -106,18 +106,14 @@ float getLight(vec3 ro, vec3 rd) {
     refraction = normalize(refraction);
 
     float rfl0 = dot(normalize(lights[0] - p), n);
-    rfl0 = smoothstep(0.99, 1.0, rfl0);
-    rfl0 = clamp(rfl0, 0.0, 1.0);
+    rfl0 = smoothstep(0.95, 1.0, rfl0);
     float rfl1 = dot(normalize(lights[1] - p), n);
-    rfl1 = smoothstep(0.99, 1.0, rfl1);
-    rfl1 = clamp(rfl1, 0.0, 1.0);
+    rfl1 = smoothstep(0.75, 1.0, rfl1);
 
     float rfr0 = dot(normalize(projectedLights[0] - p), refraction);
     rfr0 = smoothstep(0.0, 1.0, rfr0);
-    rfr0 = clamp(rfr0, 0.0, 1.0);
     float rfr1 = dot(normalize(projectedLights[1] - p), refraction);
     rfr1 = smoothstep(0.0, 1.0, rfr1);
-    rfr1 = clamp(rfr1, 0.0, 1.0);
 
     power += rfl0;
     power += rfl1;
@@ -134,7 +130,7 @@ Reflection getReflection(Reflection inReflection, int step) {
 
   // out reflection
   Reflection or;
-  or.power = 0.0;
+  or.power = vec3(0.);
 
   float d = rayMarch(ir.position, ir.direction, -1.0);
   if(d < MAX_DIST) {
@@ -148,35 +144,38 @@ Reflection getReflection(Reflection inReflection, int step) {
 
     float rfl0 = dot(normalize(lights[0] - or.position), reflection);
     rfl0 = smoothstep(0.99, 1.0, rfl0);
-    rfl0 = clamp(rfl0, 0.0, 1.0);
+    // rfl0 = clamp(rfl0, 0.0, 1.0);
     float rfl1 = dot(normalize(lights[1] - or.position), reflection);
     rfl1 = smoothstep(0.97, 1.0, rfl1);
-    rfl1 = clamp(rfl1, 0.0, 1.0);
+    // rfl1 = clamp(rfl1, 0.0, 1.0);
 
     float rfr0 = dot(normalize(projectedLights[0] - or.position), refraction);
-    rfr0 = smoothstep(0.5, 1.0, rfr0);
-    rfr0 = clamp(rfr0, 0.0, 1.0);
+    rfr0 = smoothstep(0.0, 1.0, rfr0);
+    // rfr0 = clamp(rfr0, 0.0, 1.0);
     float rfr1 = dot(normalize(projectedLights[1] - or.position), refraction);
-    rfr1 = smoothstep(0.5, 1.0, rfr1);
-    rfr1 = clamp(rfr1, 0.0, 1.0);
+    rfr1 = smoothstep(0.0, 1.0, rfr1);
+    // rfr1 = clamp(rfr1, 0.0, 1.0);
 
     or.power += rfl0;
     or.power += rfl1;
     or.power += rfr0;
     or.power += rfr1;
 
+    // or.power *= textureCube(bg, reflection * 2.).rgb;
+
     or.direction = reflection;
     or.position = or.position + reflection;
 
-    or.power = min(1.0, or.power);
-    or.power /= 0.8 / float(step);
+    // or.power = min(1.0, or.power);
+    or.power = clamp(or.power, 0.0, 1.0);
+    // or.power /= 0.8 / float(step);
   }
 
   return or;
 }
 
 void main() {
-  vec3 power = vec3(0.);
+  vec3 power = vec3(1.);
 
   vec3 rayOrigin = camPos;
   vec3 camForward = normalize(vec3(0.) - camPos);
@@ -213,43 +212,44 @@ void main() {
         // power += getLight(point + refractionR, refractionR);
 
         Reflection rflR;
-        rflR.power = 0.0;
+        rflR.power = vec3(0.);
         rflR.direction = refractionR;
         rflR.position = point + refractionR;
 
         Reflection rflG;
-        rflG.power = 0.0;
+        rflG.power = vec3(0.);
         rflG.direction = refractionG;
         rflG.position = point + refractionG;
 
         Reflection rflB;
-        rflB.power = 0.0;
+        rflB.power = vec3(0.);
         rflB.direction = refractionB;
         rflB.position = point + refractionB;
 
-        for(int i = 0; i < RFL_STEPS; i++) {
-          rflR = getReflection(rflR, i);
+        // for(int i = 0; i < RFL_STEPS; i++) {
+        //   rflR = getReflection(rflR, i);
 
-          power.r += rflR.power;
-        }
+        //   power.r += rflR.power;
+        // }
         for(int i = 0; i < RFL_STEPS; i++) {
           rflG = getReflection(rflG, i);
 
-          power.g += rflG.power;
+          power -= rflG.power / 2.0;
         }
-        for(int i = 0; i < RFL_STEPS; i++) {
-          rflB = getReflection(rflB, i);
+        // power *= textureCube(bg, rflG.direction).rgb;
+        // for(int i = 0; i < RFL_STEPS; i++) {
+        //   rflB = getReflection(rflB, i);
 
-          power.b += rflB.power;
-        }
+        //   power.b += rflB.power;
+        // }
       } else {
-    // uv.x /= resolution.x / resolution.y;
-    // uv += 0.5;
-    // power = texture2D(bg, uv).rgb;
+        // uv.x /= resolution.x / resolution.y;
+        // uv += 0.5;
+        // power = textureCube(bg, rayDirection).rgb;
       }
 #if AA > 1
     }
-  power /= float(AA * AA);
+  // power /= float(AA * AA);
 #endif
 
   power = clamp(power, 0.0, 1.0);
