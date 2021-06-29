@@ -1,4 +1,4 @@
-#pragma glslify: noise = require(../../glsl-util/perlin/3d)
+#pragma glslify: noise = require(../../glsl-util/perlin/4d)
 
 uniform float uTime;
 
@@ -11,21 +11,24 @@ float map(float value, float min1, float max1, float min2, float max2) {
 }
 
 void main() {
-  float time = uTime / 3.0;
-  
-  float noiseValue = noise(position + time);
+  float time = uTime / 1.0;
+
+  vec3 pos = position * 0.5;
+  pos.z += sin(time);
+  float noiseValue = noise(vec4(pos, cos(time)));
+  // float noiseValue = noise(position + time);
   // noiseValue = abs(noiseValue);
 
   float noiseAmp = map(noiseValue, 0.0, 1.0, 1.0, 1.5);
 
   vec3 newPos = position * noiseAmp;
   // vec3 newPos = position;
-  
+
   vec4 modelPosition = modelMatrix * vec4(newPos, 1.0);
   vec3 modelNormal = mat3(modelMatrix) * normal;
-  
+
   gl_Position = projectionMatrix * viewMatrix * modelPosition;
-  
+
   vUv = uv;
   vNormal = modelNormal;
   vWorldPosition = modelPosition.xyz;

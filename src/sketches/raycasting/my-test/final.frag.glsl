@@ -1,15 +1,18 @@
-#pragma glslify: noise = require(../../../glsl-util/perlin/3d)
+#pragma glslify: noise = require(../../../glsl-util/perlin/4d)
 
 #define MAX_STEPS 100
 #define MAX_DIST 100.
 #define SURF_DIST .001
 #define IOR 1.45
 #define LCD 0.01
-#define RFL_STEPS 4
+#define RFL_STEPS 6
 #define AA 1
 
 uniform samplerCube bg;
 uniform vec3 camPos;
+uniform vec3 boxSize;
+uniform float morphPower;
+uniform float boxThickness;
 uniform vec2 resolution;
 uniform float uTime;
 
@@ -18,7 +21,7 @@ vec3[2] projectedLights;
 float rIOR = 1.0 / IOR;
 
 struct Reflection {
-  vec3 power;
+  float power;
   vec3 position;
   vec3 direction;
 };
@@ -40,29 +43,34 @@ float sdPlane(vec3 p) {
   return d;
 }
 float sdBox(vec3 point, vec3 position, vec3 size) {
-  // point.xz *= rotate(uTime);
+  point.xz *= rotate(-uTime);
   // point.xy *= rotate(3.1415 * 0.25);
   point += position;
   point = abs(point) - size;
-  // float morphAmount = -0.37;
-  float morphAmount = 0.1;
+  float morphAmount = -0.4;
+  // float morphAmount = 0.03;
   return length(max(point, 0.)) + min(max(point.x, max(point.y, point.z)), 0.) - morphAmount;
 }
 float sdSphere(vec3 p, float s) {
   return length(p) - s;
 }
 float getDist(vec3 point) {
-  float box = sdBox(point, vec3(0.), vec3(1.5, 0.3, 0.3));
-  // box = abs(box) - 0.4;
+  float box = sdBox(point, vec3(0.), boxSize);
+  box = abs(box) - 0.4;
   // float prism = sdHexPrism(point, vec2(1.5));
-  // prism = abs(prism) - 0.1;
   // float plane = sdPlane(point);
-  // float s = sdSphere(point, 1.5);
+
+  // noisy one:
+  // float time = uTime;
+  // point.xz *= rotate(time);
+  // float amp = 0.2;
   // float sphere = sdSphere(point, 1.0);
-  // sphere += noise(point * 1.0) - 0.2;
+  // vec3 noisep = point * 0.6;
+  // noisep.z += cos(time) * amp;
+  // sphere += noise(vec4(noisep, sin(time) * amp)) - 0.2;
+  // return sphere * 0.4;
 
   return box;
-  // return sphere * 0.4;
   // return max(plane, prism);
 }
 float rayMarch(vec3 ro, vec3 rd, float sign) {
@@ -140,7 +148,7 @@ Reflection getReflection(Reflection inReflection, int step) {
 
   // out reflection
   Reflection or;
-  or.power = vec3(0.);
+  or.power = 0.;
 
   float d = rayMarch(ir.position, ir.direction, -1.0);
   if(d < MAX_DIST) {
@@ -171,8 +179,6 @@ Reflection getReflection(Reflection inReflection, int step) {
     or.power += rfr0;
     or.power += rfr1;
 
-    // or.power *= textureCube(bg, reflection * 2.).rgb;
-
     or.direction = reflection;
     or.position = or.position + reflection;
 
@@ -185,7 +191,7 @@ Reflection getReflection(Reflection inReflection, int step) {
 }
 
 void main() {
-  vec3 power = vec3(1.);
+  vec3 power = vec3(0.);
 
   vec3 rayOrigin = camPos;
   vec3 camForward = normalize(vec3(0.) - camPos);
@@ -219,40 +225,42 @@ void main() {
         vec3 refractionR = refract(rayDirection, normal, rIOR + LCD);
         vec3 refractionG = refract(rayDirection, normal, rIOR);
         vec3 refractionB = refract(rayDirection, normal, rIOR - LCD);
-        // power -= getLight(point + refractionR, refractionR);
-        power += getDiffuse(point, normal);
+        // power += getLight(point + refractionR, refractionR);
+        // power += getDiffuse(point, normal);
 
         Reflection rflR;
-        rflR.power = vec3(0.);
+        rflR.power = 0.;
         rflR.direction = refractionR;
         rflR.position = point + refractionR;
 
         Reflection rflG;
-        rflG.power = vec3(0.);
+        rflG.power = 0.;
         rflG.direction = refractionG;
         rflG.position = point + refractionG;
 
         Reflection rflB;
-        rflB.power = vec3(0.);
+        rflB.power = 0.;
         rflB.direction = refractionB;
         rflB.position = point + refractionB;
 
         // for(int i = 0; i < RFL_STEPS; i++) {
         //   rflR = getReflection(rflR, i);
 
-        //   power.r += rflR.power;
+        //   power.r -= rflR.power;
         // }
         for(int i = 0; i < RFL_STEPS; i++) {
           rflG = getReflection(rflG, i);
 
-          power -= rflG.power;
+          power += rflG.power;
+          // power.g += rflG.power / 4.0;
+          // power.b += rflG.power / 10.0;
         }
-        power *= textureCube(bg, rflG.direction).rgb;
         // for(int i = 0; i < RFL_STEPS; i++) {
         //   rflB = getReflection(rflB, i);
 
-        //   power.b += rflB.power;
+        //   power.b -= rflB.power;
         // }
+        power *= textureCube(bg, rflG.direction).rgb;
       } else {
         // uv.x /= resolution.x / resolution.y;
         // uv += 0.5;
