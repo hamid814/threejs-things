@@ -1,0 +1,28 @@
+{{> ../../html/header}}
+<style>
+  .blend {
+    position: fixed;
+    width: 100vw;
+    height: 0vh;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+    background-size: 100%;
+    background-image: linear-gradient(to right, #fff, #fff);
+    mix-blend-mode: difference;
+    {{!-- animation: anim 1s cubic-bezier(1,.01,.84,.14); --}}
+  }
+  @keyframes anim {
+    from {
+      height: 0;
+    }
+    to {
+      height: 100vh;
+    }
+  }
+</style>
+
+<canvas id="webgl"></canvas>
+
+<div class="blend"></div>
+{{> ../../html/footer}}

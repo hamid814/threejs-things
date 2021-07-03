@@ -1,24 +1,22 @@
-#pragma glslify: noise = require(../../../glsl-util/perlin/4d)
+precision highp float;
 
 #define MAX_STEPS 100
 #define MAX_DIST 100.
 #define SURF_DIST .001
 #define IOR 1.45
-#define RFL_STEPS 2
+#define LCD 0.02
+#define RFL_STEPS 6
 #define AA 1
 
-uniform samplerCube bg;
 uniform vec3 camPos;
 uniform vec3 boxSize;
-uniform vec2 resolution;
 uniform float morphPower;
 uniform float boxThickness;
-uniform float sphereRadius;
-uniform float LCD; // ligth channel delta
+uniform vec2 resolution;
 uniform float uTime;
 
-vec3[2] lights;
-vec3[2] projectedLights;
+vec3 lights[2];
+vec3 projectedLights[2];
 float rIOR = 1.0 / IOR;
 
 struct Reflection {
@@ -44,52 +42,24 @@ float sdPlane(vec3 p) {
   return d;
 }
 float sdBox(vec3 point, vec3 position, vec3 size) {
-  // point.xz *= rotate(-uTime);
+  point.xz *= rotate(-uTime);
   // point.xy *= rotate(3.1415 * 0.25);
   point += position;
   point = abs(point) - size;
-  // float morphAmount = -0.4;
   float morphAmount = 0.1;
   return length(max(point, 0.)) + min(max(point.x, max(point.y, point.z)), 0.) - morphAmount;
-}
-float sdTorus(vec3 p, vec2 t) {
-  p.yz *= rotate(3.1415 * 0.5);
-  vec2 q = vec2(length(p.xz) - t.x, p.y);
-  return length(q) - t.y;
 }
 float sdSphere(vec3 p, float s) {
   return length(p) - s;
 }
-float smin(float a, float b, float k) {
-  float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
-  return mix(b, a, h) - k * h * (1.0 - h);
-}
 float getDist(vec3 point) {
-  float time = uTime;
-  float s = sin(time) * 0.2 + 0.8;
-  float c = cos(time + 3.14 * 0.5) * 0.2 + 0.8;
-  float box = sdBox(point, vec3(0.), vec3(1.) * s);
-  // float vastBox = sdBox(point, vec3(0.), vec3(5.0, 5.0, 0.05));
+  float box = sdBox(point, vec3(0.), boxSize);
   // box = abs(box) - 0.4;
-  // float prism = sdHexPrism(point, vec2(1.5) * c);
+  // float prism = sdHexPrism(point, vec2(1.5));
   // float plane = sdPlane(point);
 
-  // noisy one:
-  // float time = uTime;
-  // point.xz *= rotate(time);
-  // float amp = 0.2;
-  float sphere = sdSphere(point, 1.5);
-  // noisep.z += cos(time) * amp;
-  // sphere += noise(vec4(noisep, sin(time) * amp)) - 0.2;
-  // return sphere * 0.4;
-  sphere += sin(distance(point, vec3(10.0)) * 12.0 + time * 3.0) * 0.05;
-  // sphere += sin(point.y * 10.0 + time * 3.0) * 0.03;
-  // sphere += cos(point.x * 10.0 + time * 3.0) * 0.03;
-  // sphere += cos(point.z * 10.0 + time * 3.0) * 0.03;
-
-  return sphere;
-  // return mix(box, sphere, s);
-  return smin(box, sphere, 0.1);
+  return box;
+  // return max(plane, prism);
 }
 float rayMarch(vec3 ro, vec3 rd, float sign) {
   float dO = 0.;
@@ -142,7 +112,7 @@ float getLight(vec3 ro, vec3 rd) {
     refraction = normalize(refraction);
 
     float rfl0 = dot(normalize(lights[0] - p), n);
-    rfl0 = smoothstep(0.95, 1.1, rfl0);
+    rfl0 = smoothstep(0.95, 1.0, rfl0);
     float rfl1 = dot(normalize(lights[1] - p), n);
     rfl1 = smoothstep(0.75, 1.0, rfl1);
 
@@ -180,13 +150,17 @@ Reflection getReflection(Reflection inReflection, int step) {
 
     float rfl0 = dot(normalize(lights[0] - or.position), reflection);
     rfl0 = smoothstep(0.99, 1.0, rfl0);
+    // rfl0 = clamp(rfl0, 0.0, 1.0);
     float rfl1 = dot(normalize(lights[1] - or.position), reflection);
     rfl1 = smoothstep(0.97, 1.0, rfl1);
+    // rfl1 = clamp(rfl1, 0.0, 1.0);
 
     float rfr0 = dot(normalize(projectedLights[0] - or.position), refraction);
     rfr0 = smoothstep(0.0, 1.0, rfr0);
+    // rfr0 = clamp(rfr0, 0.0, 1.0);
     float rfr1 = dot(normalize(projectedLights[1] - or.position), refraction);
     rfr1 = smoothstep(0.0, 1.0, rfr1);
+    // rfr1 = clamp(rfr1, 0.0, 1.0);
 
     or.power += rfl0;
     or.power += rfl1;
@@ -198,14 +172,16 @@ Reflection getReflection(Reflection inReflection, int step) {
 
     // or.power = min(1.0, or.power);
     or.power = clamp(or.power, 0.0, 1.0);
-    // or.power *= pow(0.5, float(step));
+    // or.power /= 0.8 / float(step);
   }
 
   return or;
 }
 
+varying vec2 vUv;
+
 void main() {
-  vec3 power = vec3(0.);
+  vec3 power = vec3(1.);
 
   vec3 rayOrigin = camPos;
   vec3 camForward = normalize(vec3(0.) - camPos);
@@ -224,8 +200,10 @@ void main() {
       vec2 uv = (2. * gl_FragCoord.xy + o - resolution) / resolution.y;
       uv *= 0.5;
   #else
-      vec2 uv = (2. * gl_FragCoord.xy - resolution) / resolution.y;
-      uv *= 0.5;
+      // vec2 uv = (2. * gl_FragCoord.xy - resolution) / resolution.y;
+      vec2 uv = vUv - 0.5;
+      uv.x *= resolution.x / resolution.y;
+      // uv *= 0.5;
   #endif
 
       vec3 rayDirection = uv.x * camRight + uv.y * camUp + camForward;
@@ -257,25 +235,21 @@ void main() {
         rflB.direction = refractionB;
         rflB.position = point + refractionB;
 
-        // float s = sin(uTime) * 0.5 + 0.505;
-        // int reflSteps = int(ceil(s * float(RFL_STEPS)));
-        int reflSteps = RFL_STEPS;
+        // for(int i = 0; i < RFL_STEPS; i++) {
+        //   rflR = getReflection(rflR, i);
 
-        for(int i = 0; i < reflSteps; i++) {
-          rflR = getReflection(rflR, i);
-
-          power.r += rflR.power;
-        }
-        for(int i = 0; i < reflSteps; i++) {
+        //   power.r -= rflR.power;
+        // }
+        for(int i = 0; i < RFL_STEPS; i++) {
           rflG = getReflection(rflG, i);
 
-          power.g += rflG.power;
+          power -= rflG.power;
         }
-        for(int i = 0; i < reflSteps; i++) {
-          rflB = getReflection(rflB, i);
+        // for(int i = 0; i < RFL_STEPS; i++) {
+        //   rflB = getReflection(rflB, i);
 
-          power.b += rflB.power;
-        }
+        //   power.b -= rflB.power;
+        // }
         // power *= textureCube(bg, rflG.direction).rgb;
       } else {
         // uv.x /= resolution.x / resolution.y;
@@ -288,7 +262,7 @@ void main() {
 #endif
 
   power = clamp(power, 0.0, 1.0);
-  power = pow(power, vec3(0.4545));
+  // power = pow(power, vec3(0.4545));
 
   gl_FragColor = vec4(power, 1.0);
 }

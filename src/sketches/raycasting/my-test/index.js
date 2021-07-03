@@ -41,7 +41,7 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   10
 );
-camera.position.set(0, 2, 4);
+camera.position.set(-2, 2, 4);
 camera.lookAt(0, 0, 0);
 
 new OrbitControls(camera, renderer.domElement);
@@ -65,6 +65,7 @@ pass = new ShaderPass({
     camPos: { value: camera.position },
     worldToCamera: { value: camera.matrixWorld },
     boxSize: { value: values.boxSize },
+    LCD: { value: 0.02 },
     bg: { value: img },
   },
   vertexShader: vs,
@@ -95,12 +96,13 @@ function render() {
   pass.uniforms.uTime.value = time;
   pass.uniforms.camPos.value = camera.position;
   pass.uniforms.worldToCamera.value = camera.matrixWorld;
-  // pass.uniforms.boxSize.value = values.boxSize;
+  pass.uniforms.LCD.value = 0.02;
+  pass.uniforms.boxSize.value = values.boxSize;
 
   requestAnimationFrame(render);
 
   // saveAsImage();
-  // if (time < Math.PI * 0.5) {
+  // if (time < Math.PI * 2) {
   //   setTimeout(() => {
   //     render();
   //   }, 500);

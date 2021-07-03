@@ -103,7 +103,7 @@ const RaytracingMaterial = function (params) {
   const { resolution } = params;
 
   const shaderMaterial = new THREE.ShaderMaterial({
-    defines: { AA: 2 },
+    defines: { AA: 1 },
     uniforms: {
       refractionPower: { value: 0.77 },
       lightChannelDelta: { value: 0.02 },

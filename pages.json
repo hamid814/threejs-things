@@ -3,6 +3,7 @@
     "light-shader",
     "test",
     "raycasting",
-    "test_raycasting"
+    "test_raycasting",
+    "ogl"
   ]
 }
