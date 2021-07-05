@@ -4,7 +4,7 @@
 #define MAX_DIST 100.
 #define SURF_DIST .001
 #define IOR 1.45
-#define RFL_STEPS 2
+#define RFL_STEPS 4
 #define AA 1
 
 uniform samplerCube bg;
@@ -64,6 +64,34 @@ float smin(float a, float b, float k) {
   float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
   return mix(b, a, h) - k * h * (1.0 - h);
 }
+float sdPyramid(in vec3 p, in float h) {
+  float m2 = h * h + 0.25;
+
+    // symmetry
+  p.xz = abs(p.xz);
+  p.xz = (p.z > p.x) ? p.zx : p.xz;
+  p.xz -= 0.5;
+
+    // project into face plane (2D)
+  vec3 q = vec3(p.z, h * p.y - 0.5 * p.x, h * p.x + 0.5 * p.y);
+
+  float s = max(-q.x, 0.0);
+  float t = clamp((q.y - 0.5 * p.z) / (m2 + 0.25), 0.0, 1.0);
+
+  float a = m2 * (q.x + s) * (q.x + s) + q.y * q.y;
+  float b = m2 * (q.x + 0.5 * t) * (q.x + 0.5 * t) + (q.y - m2 * t) * (q.y - m2 * t);
+
+  float d2 = min(q.y, -q.x * m2 - q.y * 0.5) > 0.0 ? 0.0 : min(a, b);
+
+    // recover 3D and scale, and add sign
+  return sqrt((d2 + q.z * q.z) / m2) * sign(max(q.z, -p.y));;
+}
+float sdBoundingBox(vec3 p, vec3 b, float e) {
+  p = abs(p) - b;
+  vec3 q = abs(p + e) - e;
+
+  return min(min(length(max(vec3(p.x, q.y, q.z), 0.0)) + min(max(p.x, max(q.y, q.z)), 0.0), length(max(vec3(q.x, p.y, q.z), 0.0)) + min(max(q.x, max(p.y, q.z)), 0.0)), length(max(vec3(q.x, q.y, p.z), 0.0)) + min(max(q.x, max(q.y, p.z)), 0.0));
+}
 float getDist(vec3 point) {
   float time = uTime;
   float s = sin(time) * 0.2 + 0.8;
@@ -78,17 +106,21 @@ float getDist(vec3 point) {
   // float time = uTime;
   // point.xz *= rotate(time);
   // float amp = 0.2;
-  float sphere = sdSphere(point, 1.5);
+  float sphere = sdSphere(point, 1.5 * c);
   // noisep.z += cos(time) * amp;
   // sphere += noise(vec4(noisep, sin(time) * amp)) - 0.2;
   // return sphere * 0.4;
-  sphere += sin(distance(point, vec3(10.0)) * 12.0 + time * 3.0) * 0.05;
+  // sphere += sin(distance(point, vec3(10.0)) * 12.0 + time * 3.0) * 0.05;
   // sphere += sin(point.y * 10.0 + time * 3.0) * 0.03;
   // sphere += cos(point.x * 10.0 + time * 3.0) * 0.03;
   // sphere += cos(point.z * 10.0 + time * 3.0) * 0.03;
 
-  return sphere;
-  // return mix(box, sphere, s);
+  float pyr = sdPyramid(point, 1.0);
+  float bBox = sdBoundingBox(point, vec3(1.0), 0.1);
+
+  // return bBox;
+  // return mix(box, bBox, 0.2);
+  // return mix(box, bBox, sin(time * 0.5) * 0.5 + 0.5);
   return smin(box, sphere, 0.1);
 }
 float rayMarch(vec3 ro, vec3 rd, float sign) {
@@ -240,7 +272,7 @@ void main() {
         vec3 refractionG = refract(rayDirection, normal, rIOR);
         vec3 refractionB = refract(rayDirection, normal, rIOR - LCD);
         // power += getLight(point + refractionR, refractionR);
-        // power += getDiffuse(point, normal);
+        float diff = getDiffuse(point, normal);
 
         Reflection rflR;
         rflR.power = 0.;
@@ -261,21 +293,31 @@ void main() {
         // int reflSteps = int(ceil(s * float(RFL_STEPS)));
         int reflSteps = RFL_STEPS;
 
+        vec3 refColor = vec3(0.);
+
         for(int i = 0; i < reflSteps; i++) {
           rflR = getReflection(rflR, i);
 
-          power.r += rflR.power;
+          refColor.r += rflR.power;
         }
         for(int i = 0; i < reflSteps; i++) {
           rflG = getReflection(rflG, i);
 
-          power.g += rflG.power;
+          refColor.g += rflG.power;
         }
         for(int i = 0; i < reflSteps; i++) {
           rflB = getReflection(rflB, i);
 
-          power.b += rflB.power;
+          refColor.b += rflB.power;
         }
+        power += refColor;
+
+        // float time = uTime;
+        // float s = sin(time) * 0.5 + 0.5;
+        // float c = cos(time + 3.14 * 0.5) * 0.5 + 0.5;
+        // power += refColor * s;
+        // power += diff * c;
+
         // power *= textureCube(bg, rflG.direction).rgb;
       } else {
         // uv.x /= resolution.x / resolution.y;
