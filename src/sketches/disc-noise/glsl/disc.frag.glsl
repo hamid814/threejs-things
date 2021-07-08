@@ -8,19 +8,19 @@ varying vec2 vUv;
 void main() {
   float time = uTime * 5.0;
   float timeStep = 0.08;
-  
+
   float timeN5 = time - 5.0 * timeStep;
   float timeN4 = time - 4.0 * timeStep;
   float timeN3 = time - 3.0 * timeStep;
   float timeN2 = time - 2.0 * timeStep;
   float timeN1 = time - 1.0 * timeStep;
-  
+
   float timeP1 = time + 1.0 * timeStep;
   float timeP2 = time + 2.0 * timeStep;
   float timeP3 = time + 3.0 * timeStep;
   float timeP4 = time + 4.0 * timeStep;
   float timeP5 = time + 5.0 * timeStep;
-  
+
   vec2 ratioUV = vUv;
   ratioUV.x *= ratio;
   float shiftRatio = ratio / 2.0 - 0.5;
@@ -52,9 +52,9 @@ void main() {
   float r4 = 1.0 - step(abs(distance(ratioUV, vec2(0.5)) - noiseP4), 0.08);
   float r5 = 1.0 - step(abs(distance(ratioUV, vec2(0.5)) - noiseP5), 0.08);
 
-  float r = r1 / 5.0 + r2 / 5.0 + r3 / 5.0 + r4 / 5.0 + r5 / 5.0; 
+  float r = r1 / 5.0 + r2 / 5.0 + r3 / 5.0 + r4 / 5.0 + r5 / 5.0;
 
-  float b = b1 / 5.0 + b2 / 5.0 + b3 / 5.0 + b4 / 5.0 + b5 / 5.0; 
+  float b = b1 / 5.0 + b2 / 5.0 + b3 / 5.0 + b4 / 5.0 + b5 / 5.0;
 
   gl_FragColor = vec4(r, 1.0 - step(r + b, 1.0), b, 1.0);
 }
