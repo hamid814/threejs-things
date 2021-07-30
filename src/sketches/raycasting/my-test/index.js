@@ -47,11 +47,17 @@ camera.lookAt(0, 0, 0);
 new OrbitControls(camera, renderer.domElement);
 
 const loader = new THREE.TextureLoader();
+const cubeLoader = new THREE.CubeTextureLoader();
 
+// const url = '../../../textures/text/awesome.jpg';
 const url = '../../../textures/text/awesome.jpg';
-// const urls = [url, url, url, url, url, url];
+const urls = [url, url, url, url, url, url];
 
-const img = loader.load(url, (t) => {
+// const img = loader.load(url, (t) => {
+//   pass.uniforms.bg.value = t;
+//   render();
+// });
+const img = cubeLoader.load(urls, (t) => {
   pass.uniforms.bg.value = t;
   render();
 });

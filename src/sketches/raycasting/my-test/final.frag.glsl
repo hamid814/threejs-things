@@ -4,10 +4,10 @@
 #define MAX_DIST 100.
 #define SURF_DIST .001
 #define IOR 1.45
-#define RFL_STEPS 4
+#define RFL_STEPS 3
 #define AA 1
 
-uniform sampler2D bg;
+uniform samplerCube bg;
 uniform vec3 camPos;
 uniform vec3 boxSize;
 uniform vec2 resolution;
@@ -49,7 +49,7 @@ float sdBox(vec3 point, vec3 position, vec3 size) {
   point += position;
   point = abs(point) - size;
   // float morphAmount = -0.4;
-  float morphAmount = 0.1;
+  float morphAmount = 0.03;
   return length(max(point, 0.)) + min(max(point.x, max(point.y, point.z)), 0.) - morphAmount;
 }
 float sdTorus(vec3 p, vec2 t) {
@@ -261,6 +261,25 @@ void main() {
       uv *= 0.5;
   #endif
 
+      vec2 rotatePoint = vec2(0.25, 0.25);
+      if(distance(uv, rotatePoint) < 0.17) {
+        uv -= rotatePoint;
+
+        uv *= rotate(3.14159265);
+        power.gb -= 1.0;
+
+        uv += rotatePoint;
+      }
+      rotatePoint = vec2(-0.25, -0.25);
+      if(distance(uv, rotatePoint) < 0.1) {
+        uv -= rotatePoint;
+
+        uv *= rotate(3.14159265);
+        power.r -= 1.0;
+
+        uv += rotatePoint;
+      }
+
       vec3 rayDirection = uv.x * camRight + uv.y * camUp + camForward;
 
       float dist = rayMarch(rayOrigin, rayDirection, 1.0);
@@ -272,7 +291,7 @@ void main() {
         vec3 refractionR = refract(rayDirection, normal, rIOR + LCD);
         vec3 refractionG = refract(rayDirection, normal, rIOR);
         vec3 refractionB = refract(rayDirection, normal, rIOR - LCD);
-        power += getLight(point + refractionR, refractionR);
+        // power += getLight(point + refractionR, refractionR);
         float diff = getDiffuse(point, normal);
 
         Reflection rflR;
@@ -301,11 +320,11 @@ void main() {
 
         //   refColor.r += rflR.power;
         // }
-        // for(int i = 0; i < reflSteps; i++) {
-        //   rflG = getReflection(rflG, i);
+        for(int i = 0; i < reflSteps; i++) {
+          rflG = getReflection(rflG, i);
 
-        //   refColor.g += rflG.power;
-        // }
+          refColor += rflG.power;
+        }
         // for(int i = 0; i < reflSteps; i++) {
         //   rflB = getReflection(rflB, i);
 
@@ -316,15 +335,17 @@ void main() {
         // float time = uTime;
         // float s = sin(time) * 0.5 + 0.5;
         // float c = cos(time + 3.14 * 0.5) * 0.5 + 0.5;
-        // power += refColor * s;
+        power += refColor;
         // power += diff * c;
 
-        power *= texture2D(bg, -refractionR.xz).rgb;
+        // power += textureCube(bg, refractionR.xyz).rgb;
+        // power += textureCube(bg, rflR.direction).rgb;
+        // power += 0.1;
       } else {
-        uv.x /= resolution.x / resolution.y;
-        uv += 0.5;
-        power = texture2D(bg, uv).rgb;
-        // power = vec3(1.0, 0.0, 0.0);
+        // uv.x /= resolution.x / resolution.y;
+        // uv += 0.5;
+        // power = textureCube(bg, rayDirection).rgb;
+        // power += vec3(1.0, 0.0, 0.0);
       }
 #if AA > 1
     }
