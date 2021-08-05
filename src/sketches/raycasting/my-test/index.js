@@ -20,6 +20,14 @@ const values = {
   boxSize: new THREE.Vector3(1.5, 1.5, 1),
 };
 
+setTimeout(() => {
+  gsap.to(pass.uniforms.mirrorRadius, {
+    duration: 1,
+    value: 1,
+    ease: 'power4',
+  });
+}, 2000);
+
 const canvas = document.getElementById('webgl');
 
 const renderer = new THREE.WebGLRenderer({
@@ -72,6 +80,7 @@ pass = new ShaderPass({
     worldToCamera: { value: camera.matrixWorld },
     boxSize: { value: values.boxSize },
     LCD: { value: 0.02 },
+    mirrorRadius: { value: 0 },
     bg: { value: img },
   },
   vertexShader: vs,

@@ -16,6 +16,7 @@ uniform float boxThickness;
 uniform float sphereRadius;
 uniform float LCD; // ligth channel delta
 uniform float uTime;
+uniform float mirrorRadius;
 
 vec3[2] lights;
 vec3[2] projectedLights;
@@ -262,7 +263,7 @@ void main() {
   #endif
 
       vec2 rotatePoint = vec2(0.25, 0.25);
-      if(distance(uv, rotatePoint) < 0.17) {
+      if(distance(uv, rotatePoint) < 0.17 * mirrorRadius) {
         uv -= rotatePoint;
 
         uv *= rotate(3.14159265);
