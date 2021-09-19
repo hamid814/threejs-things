@@ -148,8 +148,8 @@ vec3 getNormal(vec3 point) {
 }
 
 void rotateLights(vec3 rayOrigin, vec3 camRight, vec3 camUp, vec3 camForward) {
-  lights[0] = lights[0].x * camRight + lights[0].y * camUp + lights[0].z * camForward;
-  lights[1] = lights[1].x * camRight + lights[1].y * camUp + lights[1].z * camForward;
+  lights[0] = rayOrigin + lights[0].x * camRight + lights[0].y * camUp + lights[0].z * camForward;
+  lights[1] = rayOrigin + lights[1].x * camRight + lights[1].y * camUp + lights[1].z * camForward;
 
   projectedLights[0] = lights[0] + normalize(-lights[0]) * rayMarch(lights[0], normalize(-lights[0]), 1.0) * 0.95;
   projectedLights[1] = lights[1] + normalize(-lights[1]) * rayMarch(lights[1], normalize(-lights[1]), 1.0) * 0.95;
@@ -207,49 +207,43 @@ Reflection getReflection(Reflection inReflection, int step) {
     or.position = ir.position + ir.direction * d;
     vec3 n = -getNormal(or.position);
 
-    // vec3 reflection = reflect(ir.direction, n);
-    // reflection = normalize(reflection);
-    // vec3 refraction = refract(-ir.direction, n, rIOR);
-    // refraction = normalize(refraction);
+    vec3 reflection = reflect(ir.direction, n);
+    reflection = normalize(reflection);
+    vec3 refraction = refract(-ir.direction, n, rIOR);
+    refraction = normalize(refraction);
 
-    // float rfl0 = dot(normalize(lights[0] - or.position), reflection);
-    // rfl0 = smoothstep(0.99, 1.0, rfl0);
-    // float rfl1 = dot(normalize(lights[1] - or.position), reflection);
-    // rfl1 = smoothstep(0.97, 1.0, rfl1);
+    float rfl0 = dot(normalize(lights[0] - or.position), reflection);
+    rfl0 = smoothstep(0.99, 1.0, rfl0);
+    float rfl1 = dot(normalize(lights[1] - or.position), reflection);
+    rfl1 = smoothstep(0.97, 1.0, rfl1);
 
-    // float rfr0 = dot(normalize(projectedLights[0] - or.position), refraction);
-    // rfr0 = smoothstep(0.0, 1.0, rfr0);
-    // float rfr1 = dot(normalize(projectedLights[1] - or.position), refraction);
-    // rfr1 = smoothstep(0.0, 1.0, rfr1);
+    float rfr0 = dot(normalize(projectedLights[0] - or.position), refraction);
+    rfr0 = smoothstep(0.0, 1.0, rfr0);
+    float rfr1 = dot(normalize(projectedLights[1] - or.position), refraction);
+    rfr1 = smoothstep(0.0, 1.0, rfr1);
 
-    // or.power += rfl0;
-    // or.power += rfl1;
-    // or.power += rfr0;
-    // or.power += rfr1;
+    or.power += rfl0;
+    or.power += rfl1;
+    or.power += rfr0;
+    or.power += rfr1;
 
-    // or.direction = reflection;
-    // or.position = or.position + reflection;
+    or.direction = reflection;
+    or.position = or.position + reflection;
 
     // ir.direction = -ir.direction;
-    vec3 reflection = reflect(ir.direction, n);
-    vec3 refraction = refract(ir.direction, n, IOR);
-
-    vec3 nrefl = normalize(reflection);
-    float s1 = smoothstep(.95, 1., dot(normalize(projectedLights[0] - or.position), nrefl));
-    float s2 = smoothstep(.75, 1., dot(normalize(projectedLights[1] - or.position), nrefl));
-    float reflectedLight = s1 + s2;
-    or.power += reflectedLight;
+    // vec3 reflection = reflect(ir.direction, n);
+    // vec3 refraction = refract(ir.direction, n, IOR);
 
     // vec3 nrefl = normalize(reflection);
     // float reflectedLight = smoothstep(.95, 1., dot(normalize(projectedLights[0] - or.position), nrefl)) +
     //   smoothstep(.75, 1., dot(normalize(projectedLights[1] - or.position), nrefl));
     // or.power += reflectedLight;
 
-    float refractedLights[2];
-    refractedLights[0] = dot(normalize(lights[0] - or.position), normalize(refraction));
-    refractedLights[1] = dot(normalize(lights[1] - or.position), normalize(refraction));
-    float refractedLight = (smoothstep(.0, 1., refractedLights[0]) + smoothstep(.0, 1., refractedLights[1]));
-    or.power += refractedLight;
+    // float refractedLights[2];
+    // refractedLights[0] = dot(normalize(lights[0] - or.position), normalize(refraction));
+    // refractedLights[1] = dot(normalize(lights[1] - or.position), normalize(refraction));
+    // float refractedLight = (smoothstep(.0, 1., refractedLights[0]) + smoothstep(.0, 1., refractedLights[1]));
+    // or.power += refractedLight;
 
     // or.power = min(1.0, or.power);
     or.power = clamp(or.power, 0.0, 1.0);

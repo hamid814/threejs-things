@@ -18,7 +18,7 @@ float morphPower = 0.1;
 vec3 lights[2];
 vec3 projectedLights[2];
 
-float reflectionEffectPower = 0.1;
+float reflectionEffectPower = 0.8;
 float diff1from = 0.97;
 float diff2from = 0.9;
 
