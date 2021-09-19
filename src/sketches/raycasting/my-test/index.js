@@ -6,12 +6,10 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import Stats from 'three/examples/jsm/libs/stats.module';
 import vs from './vert.glsl';
 // import fs from './frag.glsl';
-import fs from './my-frag.glsl';
 import fullFrag from './full-test';
 import finalFrag from './final.frag.glsl';
-import testFrag from './test.frag.glsl';
-import vectorFrag from './vector.frag.glsl';
-import noiseFrag from './noise.glsl';
+import fullGLSL from './full.glsl';
+import speedrun from './speedrun.glsl';
 
 let pass;
 
@@ -49,7 +47,7 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   10
 );
-camera.position.set(-2, 2, 4);
+camera.position.set(0, 0, 4);
 camera.lookAt(0, 0, 0);
 
 new OrbitControls(camera, renderer.domElement);
@@ -84,12 +82,10 @@ pass = new ShaderPass({
     bg: { value: img },
   },
   vertexShader: vs,
-  fragmentShader: finalFrag,
-  // fragmentShader: noiseFrag,
-  // fragmentShader: testFrag,
-  // fragmentShader: fs,
+  // fragmentShader: finalFrag,
   // fragmentShader: fullFrag,
-  // fragmentShader: vectorFrag,
+  fragmentShader: fullGLSL,
+  // fragmentShader: speedrun,
 });
 
 composer.addPass(pass);

@@ -18,7 +18,6 @@ float morphPower = 0.1;
 vec3 lights[2];
 vec3 projectedLights[2];
 
-vec3 glassColor = vec3(1.);
 float reflectionEffectPower = 0.1;
 float diff1from = 0.97;
 float diff2from = 0.9;
@@ -405,7 +404,6 @@ void main() {
     power /= float(AA * AA);
   #endif
 
-  power *= glassColor;
   // power = pow(power, vec3(0.4545));
 
   gl_FragColor = vec4(power, 1.0);

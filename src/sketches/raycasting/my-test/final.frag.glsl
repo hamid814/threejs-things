@@ -50,7 +50,7 @@ float sdBox(vec3 point, vec3 position, vec3 size) {
   point += position;
   point = abs(point) - size;
   // float morphAmount = -0.4;
-  float morphAmount = 0.03;
+  float morphAmount = 0.1;
   return length(max(point, 0.)) + min(max(point.x, max(point.y, point.z)), 0.) - morphAmount;
 }
 float sdTorus(vec3 p, vec2 t) {
@@ -262,24 +262,24 @@ void main() {
       uv *= 0.5;
   #endif
 
-      vec2 rotatePoint = vec2(0.25, 0.25);
-      if(distance(uv, rotatePoint) < 0.17 * mirrorRadius) {
-        uv -= rotatePoint;
+      // vec2 rotatePoint = vec2(0.25, 0.25);
+      // if(distance(uv, rotatePoint) < 0.17 * mirrorRadius) {
+      //   uv -= rotatePoint;
 
-        uv *= rotate(3.14159265);
-        power.gb -= 1.0;
+      //   uv *= rotate(3.14159265);
+      //   power.gb -= 1.0;
 
-        uv += rotatePoint;
-      }
-      rotatePoint = vec2(-0.25, -0.25);
-      if(distance(uv, rotatePoint) < 0.1) {
-        uv -= rotatePoint;
+      //   uv += rotatePoint;
+      // }
+      // rotatePoint = vec2(-0.25, -0.25);
+      // if(distance(uv, rotatePoint) < 0.1) {
+      //   uv -= rotatePoint;
 
-        uv *= rotate(3.14159265);
-        power.r -= 1.0;
+      //   uv *= rotate(3.14159265);
+      //   power.r -= 1.0;
 
-        uv += rotatePoint;
-      }
+      //   uv += rotatePoint;
+      // }
 
       vec3 rayDirection = uv.x * camRight + uv.y * camUp + camForward;
 
@@ -316,28 +316,25 @@ void main() {
 
         vec3 refColor = vec3(0.);
 
-        // for(int i = 0; i < reflSteps; i++) {
-        //   rflR = getReflection(rflR, i);
-
-        //   refColor.r += rflR.power;
-        // }
         for(int i = 0; i < reflSteps; i++) {
-          rflG = getReflection(rflG, i);
-
-          refColor += rflG.power;
+          rflR = getReflection(rflR, i);
         }
+        refColor += rflR.power;
+        // for(int i = 0; i < reflSteps; i++) {
+        //   rflG = getReflection(rflG, i);
+        // }
+        // refColor.g += rflG.power;
         // for(int i = 0; i < reflSteps; i++) {
         //   rflB = getReflection(rflB, i);
-
-        //   refColor.b += rflB.power;
         // }
+        // refColor.b += rflB.power;
         // power += diff;
 
         // float time = uTime;
         // float s = sin(time) * 0.5 + 0.5;
         // float c = cos(time + 3.14 * 0.5) * 0.5 + 0.5;
         power += refColor;
-        // power += diff * c;
+        // power += diff * 0.05;
 
         // power += textureCube(bg, refractionR.xyz).rgb;
         // power += textureCube(bg, rflR.direction).rgb;
