@@ -90,9 +90,6 @@ pass = new ShaderPass({
 
 composer.addPass(pass);
 
-// const radialPass = new RadialPass(6);
-// composer.addPass(radialPass);
-
 let time = 0;
 let num = 0;
 

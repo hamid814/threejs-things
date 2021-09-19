@@ -125,16 +125,15 @@ vec3 roundedboxNormal(in vec3 pos) {
   return normalize(sign(pos) * max(abs(pos) - size, 0.));
 }
 
-vec4 rayFromInside = vec4(10., -1., 0., 1.);
-
-float traceOuter1(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
+float traceOuter1(vec3 rayOrigin, vec3 rayDirection, float eta) {
   rayDirection = normalize(rayDirection);
   float power = 0.;
-  float d = roundedboxIntersectModified(rayOrigin, rayDirection, -1.0);
-  // float d = rayMarch(rayOrigin, rayDirection, -1.0);
-  if(d < 1e14) {
+  // float d = roundedboxIntersectModified(rayOrigin, rayDirection, -1.0);
+  float d = rayMarch(rayOrigin, rayDirection, -1.0);
+  if(d < MAX_DIST) {
     vec3 pos = rayOrigin + rayDirection * d;
-    vec3 nor = -roundedboxNormal(pos);
+    // vec3 nor = -roundedboxNormal(pos);
+    vec3 nor = -getNormal(pos);
 
     rayDirection = -rayDirection;
     vec3 reflection = reflect(rayDirection, nor);
@@ -154,14 +153,15 @@ float traceOuter1(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
   return power;
 }
 
-float traceOuter2(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
+float traceOuter2(vec3 rayOrigin, vec3 rayDirection, float eta) {
   rayDirection = normalize(rayDirection);
   float power = 0.;
-  float d = roundedboxIntersectModified(rayOrigin, rayDirection, -1.0);
-  // float d = rayMarch(rayOrigin, rayDirection, -1.0);
-  if(d < 1e14) {
+  // float d = roundedboxIntersectModified(rayOrigin, rayDirection, -1.0);
+  float d = rayMarch(rayOrigin, rayDirection, -1.0);
+  if(d < MAX_DIST) {
     vec3 pos = rayOrigin + rayDirection * d;
-    vec3 nor = -roundedboxNormal(pos);
+    // vec3 nor = -roundedboxNormal(pos);
+    vec3 nor = -getNormal(pos);
 
     rayDirection = -rayDirection;
     vec3 reflection = reflect(rayDirection, nor);
@@ -178,18 +178,20 @@ float traceOuter2(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
     float refractedLight = (smoothstep(.0, 1., refractedLights[0]) + smoothstep(.0, 1., refractedLights[1]));
     power += refractedLight;
 
-    power += traceOuter1(pos + rayFromInside.x * reflection, -reflection, eta, rayFromInside) * 0.8;
+    power += traceOuter1(pos + reflection, -reflection, eta) * 0.8;
   }
   return power;
 }
-float traceOuter3(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
+
+float traceOuter3(vec3 rayOrigin, vec3 rayDirection, float eta) {
   rayDirection = normalize(rayDirection);
   float power = 0.;
-  float d = roundedboxIntersectModified(rayOrigin, rayDirection, -1.0);
-  // float d = rayMarch(rayOrigin, rayDirection, -1.0);
-  if(d < 1e14) {
+  // float d = roundedboxIntersectModified(rayOrigin, rayDirection, -1.0);
+  float d = rayMarch(rayOrigin, rayDirection, -1.0);
+  if(d < MAX_DIST) {
     vec3 pos = rayOrigin + rayDirection * d;
-    vec3 nor = -roundedboxNormal(pos);
+    // vec3 nor = -roundedboxNormal(pos);
+    vec3 nor = -getNormal(pos);
 
     rayDirection = -rayDirection;
     vec3 reflection = reflect(rayDirection, nor);
@@ -206,18 +208,20 @@ float traceOuter3(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
     float refractedLight = (smoothstep(.0, 1., refractedLights[0]) + smoothstep(.0, 1., refractedLights[1]));
     power += refractedLight;
 
-    power += traceOuter2(pos + rayFromInside.x * reflection, -reflection, eta, rayFromInside) * 0.8;
+    power += traceOuter2(pos + reflection, -reflection, eta) * 0.8;
   }
   return power;
 }
-float traceOuter4(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
+
+float traceOuter4(vec3 rayOrigin, vec3 rayDirection, float eta) {
   rayDirection = normalize(rayDirection);
   float power = 0.;
-  float d = roundedboxIntersectModified(rayOrigin, rayDirection, -1.0);
-  // float d = rayMarch(rayOrigin, rayDirection, -1.0);
-  if(d < 1e14) {
+  // float d = roundedboxIntersectModified(rayOrigin, rayDirection, -1.0);
+  float d = rayMarch(rayOrigin, rayDirection, -1.0);
+  if(d < MAX_DIST) {
     vec3 pos = rayOrigin + rayDirection * d;
-    vec3 nor = -roundedboxNormal(pos);
+    // vec3 nor = -roundedboxNormal(pos);
+    vec3 nor = -getNormal(pos);
 
     rayDirection = -rayDirection;
     vec3 reflection = reflect(rayDirection, nor);
@@ -234,18 +238,20 @@ float traceOuter4(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
     float refractedLight = (smoothstep(.0, 1., refractedLights[0]) + smoothstep(.0, 1., refractedLights[1]));
     power += refractedLight;
 
-    power += traceOuter3(pos + rayFromInside.x * reflection, -reflection, eta, rayFromInside) * 0.8;
+    power += traceOuter3(pos + reflection, -reflection, eta) * 0.8;
   }
   return power;
 }
-float traceOuter5(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
+
+float traceOuter5(vec3 rayOrigin, vec3 rayDirection, float eta) {
   rayDirection = normalize(rayDirection);
   float power = 0.;
-  float d = roundedboxIntersectModified(rayOrigin, rayDirection, -1.0);
-  // float d = rayMarch(rayOrigin, rayDirection, -1.0);
-  if(d < 1e14) {
+  // float d = roundedboxIntersectModified(rayOrigin, rayDirection, -1.0);
+  float d = rayMarch(rayOrigin, rayDirection, -1.0);
+  if(d < MAX_DIST) {
     vec3 pos = rayOrigin + rayDirection * d;
-    vec3 nor = -roundedboxNormal(pos);
+    // vec3 nor = -roundedboxNormal(pos);
+    vec3 nor = -getNormal(pos);
 
     rayDirection = -rayDirection;
     vec3 reflection = reflect(rayDirection, nor);
@@ -262,18 +268,24 @@ float traceOuter5(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
     float refractedLight = (smoothstep(.0, 1., refractedLights[0]) + smoothstep(.0, 1., refractedLights[1]));
     power += refractedLight;
 
-    power += traceOuter4(pos + rayFromInside.x * reflection, -reflection, eta, rayFromInside) * 0.8;
+    power += traceOuter4(pos + reflection, -reflection, eta) * 0.8;
   }
   return power;
 }
+
+float getDiff(vec3 point, vec3 normal) {
+  return max(0.0, dot(normalize(scene.light[0] - point), normal));
+}
+
 vec3 trace(vec3 rayOrigin, vec3 rayDirection) {
   rayDirection = normalize(rayDirection);
   vec3 power = vec3(0., 0., 0.);
-  float d = roundedboxIntersectModified(rayOrigin, rayDirection, 1.0);
-  // float d = rayMarch(rayOrigin, rayDirection, 1.0);
-  if(d < 1e14) {
+  // float d = roundedboxIntersectModified(rayOrigin, rayDirection, 1.0);
+  float d = rayMarch(rayOrigin, rayDirection, 1.0);
+  if(d < MAX_DIST) {
     vec3 pos = rayOrigin + rayDirection * d;
-    vec3 nor = roundedboxNormal(pos);
+    // vec3 nor = roundedboxNormal(pos);
+    vec3 nor = getNormal(pos);
 
     float refractionPowerR = refractionPower + lightChannelDelta;
     float refractionPowerB = refractionPower - lightChannelDelta;
@@ -281,14 +293,11 @@ vec3 trace(vec3 rayOrigin, vec3 rayDirection) {
     vec3 refractionG = refract(rayDirection, nor, refractionPower);
     vec3 refractionB = refract(rayDirection, nor, refractionPowerB);
 
-    // power.r += traceOuter5(pos + refractionR * rayFromInside.x, -refractionR, refractionPowerR, rayFromInside);
-    // power.g += traceOuter5(pos + refractionG * rayFromInside.x, -refractionG, refractionPower, rayFromInside);
-    // power.b += traceOuter5(pos + refractionB * rayFromInside.x, -refractionB, refractionPowerB, rayFromInside);
+    power += traceOuter5(pos + refractionR, -refractionR, refractionPowerR);
+    // power.g = traceOuter5(pos + refractionG, -refractionG, refractionPower);
+    // power.b = traceOuter5(pos + refractionB, -refractionB, refractionPowerB);
 
-    power += traceOuter5(pos + refractionR * rayFromInside.x, -refractionR, refractionPowerR, rayFromInside);
-    // power.g = traceOuter5(pos + refractionG * rayFromInside.x, -refractionG, refractionPower, rayFromInside);
-    // power.b = traceOuter5(pos + refractionB * rayFromInside.x, -refractionB, refractionPowerB, rayFromInside);
-
+    // power += getDiff(pos, nor);
   }
   return power;
 }
@@ -298,13 +307,13 @@ void rotateLights(vec3 rayOrigin, vec3 camRight, vec3 camUp, vec3 camForward) {
 
   scene.light[0] = scene.light[0].x * camRight + scene.light[0].y * camUp + scene.light[0].z * camForward;
   dir = normalize(-scene.light[0]);
-  scene.projectedLight[0] = scene.light[0] + dir * roundedboxIntersectModified(scene.light[0], dir, 1.0);
-  // scene.projectedLight[0] = scene.light[0] + dir * rayMarch(scene.light[0], dir, 1.0);
+  // scene.projectedLight[0] = scene.light[0] + dir * roundedboxIntersectModified(scene.light[0], dir, 1.0);
+  scene.projectedLight[0] = scene.light[0] + dir * rayMarch(scene.light[0], dir, 1.0);
 
   scene.light[1] = scene.light[1].x * camRight + scene.light[1].y * camUp + scene.light[1].z * camForward;
   dir = normalize(-scene.light[1]);
-  scene.projectedLight[1] = scene.light[1] + dir * roundedboxIntersectModified(scene.light[1], dir, 1.0);
-  // scene.projectedLight[1] = scene.light[1] + dir * rayMarch(scene.light[1], dir, 1.0);
+  // scene.projectedLight[1] = scene.light[1] + dir * roundedboxIntersectModified(scene.light[1], dir, 1.0);
+  scene.projectedLight[1] = scene.light[1] + dir * rayMarch(scene.light[1], dir, 1.0);
 }
 
 void main() {
@@ -317,7 +326,6 @@ void main() {
 
   scene.light[0] = vec3(.2, 2., -.8);
   scene.light[1] = vec3(.2, -2., -.8);
-  vec3 dir;
 
   rotateLights(rayOrigin, camRight, camUp, camForward);
 
