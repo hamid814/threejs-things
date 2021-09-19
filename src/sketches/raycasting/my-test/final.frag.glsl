@@ -4,7 +4,7 @@
 #define MAX_DIST 100.
 #define SURF_DIST .001
 #define IOR 1.45
-#define RFL_STEPS 3
+#define RFL_STEPS 5
 #define AA 1
 
 uniform samplerCube bg;
@@ -319,15 +319,15 @@ void main() {
         for(int i = 0; i < reflSteps; i++) {
           rflR = getReflection(rflR, i);
         }
-        refColor += rflR.power;
-        // for(int i = 0; i < reflSteps; i++) {
-        //   rflG = getReflection(rflG, i);
-        // }
-        // refColor.g += rflG.power;
-        // for(int i = 0; i < reflSteps; i++) {
-        //   rflB = getReflection(rflB, i);
-        // }
-        // refColor.b += rflB.power;
+        refColor.r += rflR.power;
+        for(int i = 0; i < reflSteps; i++) {
+          rflG = getReflection(rflG, i);
+        }
+        refColor.g += rflG.power;
+        for(int i = 0; i < reflSteps; i++) {
+          rflB = getReflection(rflB, i);
+        }
+        refColor.b += rflB.power;
         // power += diff;
 
         // float time = uTime;

@@ -1,3 +1,7 @@
+#define MAX_STEPS 100
+#define MAX_DIST 100.
+#define SURF_DIST 0.001
+
 uniform vec3 camPos;
 uniform vec2 resolution;
 uniform vec2 mouse;
@@ -6,54 +10,49 @@ float morphPower = 0.9;
 float refractionPower = 0.77;
 float lightChannelDelta = 0.02;
 
-struct Scene {
-  vec3 outerSize;
-  float outerRadius;
-  vec3 innerSize;
-  float innerRadius;
+vec3 size = vec3(0.9);
+float radius = 0.1;
 
+struct Scene {
   vec3 light[2];
   vec3 projectedLight[2];
 } scene;
 
-mat4 rotateBox(in vec3 v, in float angle) {
-  float s = sin(angle);
-  float c = cos(angle);
-  float ic = 1. - c;
+float sdBox(vec3 point) {
+  point = abs(point) - vec3(1.0);
 
-  return mat4(v.x * v.x * ic + c, v.y * v.x * ic - s * v.z, v.z * v.x * ic + s * v.y, 0., v.x * v.y * ic + s * v.z, v.y * v.y * ic + c, v.z * v.y * ic - s * v.x, 0., v.x * v.z * ic - s * v.y, v.y * v.z * ic + s * v.x, v.z * v.z * ic + c, 0., 0., 0., 0., 1.);
+  float morphAmount = 0.1;
+  return length(max(point, 0.)) + min(max(point.x, max(point.y, point.z)), 0.) - morphAmount;
 }
 
-vec3 ptransform(in mat4 mat, in vec3 v) {
-  return (mat * vec4(v, 1.)).xyz;
+float getDist(vec3 point) {
+  float box = sdBox(point);
+
+  return box;
 }
 
-vec3 ntransform(in mat4 mat, in vec3 v) {
-  return (mat * vec4(v, 0.)).xyz;
+float rayMarch(vec3 ro, vec3 rd, float sign) {
+  float d = 0.0;
+
+  for(int i = 0; i < MAX_STEPS; i++) {
+    vec3 p = ro + rd * d;
+    float dist = getDist(p) * sign;
+    d += dist;
+    if(d > MAX_DIST || abs(dist) < SURF_DIST) {
+      break;
+    }
+  }
+
+  return d;
 }
 
-/**
- * https://iquilezles.org/www/articles/intersectors/intersectors.htm
- * Thank you, Inigo Quilez!
- */
+vec3 getNormal(vec3 point) {
+  float d = getDist(point);
+  vec2 e = vec2(.001, 0);
 
-float plaIntersect(in vec3 ro, in vec3 rd, in vec4 p) {
-  return -(dot(ro, p.xyz) + p.w) / dot(rd, p.xyz);
-}
+  vec3 n = d - vec3(getDist(point - e.xyy), getDist(point - e.yxy), getDist(point - e.yyx));
 
-// vec2 boxIntersection( vec3 ro, vec3 rd, vec3 boxSize, out vec3 outNormal ) 
-float boxIntersection(vec3 ro, vec3 rd, vec3 boxSize) {
-  vec3 m = 1.0 / rd; // can precompute if traversing a set of aligned boxes
-  vec3 n = m * ro;   // can precompute if traversing a set of aligned boxes
-  vec3 k = abs(m) * boxSize;
-  vec3 t1 = -n - k;
-  vec3 t2 = -n + k;
-  float tN = max(max(t1.x, t1.y), t1.z);
-  float tF = min(min(t2.x, t2.y), t2.z);
-  if(tN > tF || tF < 0.0)
-    return 0.; // no intersection
-    // outNormal = -sign(rdd)*step(t1.yzx,t1.xyz)*step(t1.zxy,t1.xyz);
-  return 1.;
+  return normalize(n);
 }
 
 float capIntersect(in vec3 ro, in vec3 rd, in vec3 pa, in vec3 pb, in float ra) {
@@ -85,11 +84,11 @@ float capIntersect(in vec3 ro, in vec3 rd, in vec3 pa, in vec3 pb, in float ra) 
   return 1e15;
 }
 
-float roundedboxIntersectModified(in vec3 rayOrigin, in vec3 rayDirection, in vec3 size, in float rad) {
+float roundedboxIntersectModified(in vec3 rayOrigin, in vec3 rayDirection, in float signIn) {
   // bounding box
   vec3 m = 1. / rayDirection;
   vec3 n = m * rayOrigin;
-  vec3 k = abs(m) * (size + rad);
+  vec3 k = abs(m) * (size + radius);
   vec3 t1 = -n - k;
   vec3 t2 = -n + k;
   float tN = max(max(t1.x, t1.y), t1.z);
@@ -113,33 +112,29 @@ float roundedboxIntersectModified(in vec3 rayOrigin, in vec3 rayDirection, in ve
     return t;
   }
 
-  t = capIntersect(ro, rd, vec3(size.x, -size.y, size.z), vec3(size.x, size.y, size.z), rad);
-  t = min(t, capIntersect(ro, rd, vec3(size.x, size.y, -size.z), vec3(size.x, size.y, size.z), rad));
-  t = min(t, capIntersect(ro, rd, vec3(-size.x, size.y, size.z), vec3(size.x, size.y, size.z), rad));
+  t = capIntersect(ro, rd, vec3(size.x, -size.y, size.z), vec3(size.x, size.y, size.z), radius);
+  t = min(t, capIntersect(ro, rd, vec3(size.x, size.y, -size.z), vec3(size.x, size.y, size.z), radius));
+  t = min(t, capIntersect(ro, rd, vec3(-size.x, size.y, size.z), vec3(size.x, size.y, size.z), radius));
 
   return t;
 }
 
-float rand(vec2 n) {
-  return fract(sin(dot(n, vec2(12.9898, 4.1414))));
-}
-
 // normal of a rounded box
-vec3 roundedboxNormal(in vec3 pos, in vec3 siz, in float rad) {
-  return normalize(sign(pos) * max(abs(pos) - siz, 0.));
-    // return normalize(sign(pos) * max(abs(pos) - siz, 0.) + rand(vec2(pos.x, pos.y * pos.z)) * .0006 - .0003);
+vec3 roundedboxNormal(in vec3 pos) {
+  // return getNormal(pos);
+  return normalize(sign(pos) * max(abs(pos) - size, 0.));
 }
 
-vec4 rayFromOutside = vec4(0., 1., 1., 0.);
 vec4 rayFromInside = vec4(10., -1., 0., 1.);
 
 float traceOuter1(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
   rayDirection = normalize(rayDirection);
   float power = 0.;
-  float d = roundedboxIntersectModified(rayOrigin, rayDirection, scene.outerSize, scene.outerRadius);
+  float d = roundedboxIntersectModified(rayOrigin, rayDirection, -1.0);
+  // float d = rayMarch(rayOrigin, rayDirection, -1.0);
   if(d < 1e14) {
     vec3 pos = rayOrigin + rayDirection * d;
-    vec3 nor = -roundedboxNormal(pos, scene.outerSize, scene.outerRadius);
+    vec3 nor = -roundedboxNormal(pos);
 
     rayDirection = -rayDirection;
     vec3 reflection = reflect(rayDirection, nor);
@@ -162,10 +157,11 @@ float traceOuter1(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
 float traceOuter2(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
   rayDirection = normalize(rayDirection);
   float power = 0.;
-  float d = roundedboxIntersectModified(rayOrigin, rayDirection, scene.outerSize, scene.outerRadius);
+  float d = roundedboxIntersectModified(rayOrigin, rayDirection, -1.0);
+  // float d = rayMarch(rayOrigin, rayDirection, -1.0);
   if(d < 1e14) {
     vec3 pos = rayOrigin + rayDirection * d;
-    vec3 nor = -roundedboxNormal(pos, scene.outerSize, scene.outerRadius);
+    vec3 nor = -roundedboxNormal(pos);
 
     rayDirection = -rayDirection;
     vec3 reflection = reflect(rayDirection, nor);
@@ -189,10 +185,11 @@ float traceOuter2(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
 float traceOuter3(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
   rayDirection = normalize(rayDirection);
   float power = 0.;
-  float d = roundedboxIntersectModified(rayOrigin, rayDirection, scene.outerSize, scene.outerRadius);
+  float d = roundedboxIntersectModified(rayOrigin, rayDirection, -1.0);
+  // float d = rayMarch(rayOrigin, rayDirection, -1.0);
   if(d < 1e14) {
     vec3 pos = rayOrigin + rayDirection * d;
-    vec3 nor = -roundedboxNormal(pos, scene.outerSize, scene.outerRadius);
+    vec3 nor = -roundedboxNormal(pos);
 
     rayDirection = -rayDirection;
     vec3 reflection = reflect(rayDirection, nor);
@@ -216,10 +213,11 @@ float traceOuter3(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
 float traceOuter4(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
   rayDirection = normalize(rayDirection);
   float power = 0.;
-  float d = roundedboxIntersectModified(rayOrigin, rayDirection, scene.outerSize, scene.outerRadius);
+  float d = roundedboxIntersectModified(rayOrigin, rayDirection, -1.0);
+  // float d = rayMarch(rayOrigin, rayDirection, -1.0);
   if(d < 1e14) {
     vec3 pos = rayOrigin + rayDirection * d;
-    vec3 nor = -roundedboxNormal(pos, scene.outerSize, scene.outerRadius);
+    vec3 nor = -roundedboxNormal(pos);
 
     rayDirection = -rayDirection;
     vec3 reflection = reflect(rayDirection, nor);
@@ -243,10 +241,11 @@ float traceOuter4(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
 float traceOuter5(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
   rayDirection = normalize(rayDirection);
   float power = 0.;
-  float d = roundedboxIntersectModified(rayOrigin, rayDirection, scene.outerSize, scene.outerRadius);
+  float d = roundedboxIntersectModified(rayOrigin, rayDirection, -1.0);
+  // float d = rayMarch(rayOrigin, rayDirection, -1.0);
   if(d < 1e14) {
     vec3 pos = rayOrigin + rayDirection * d;
-    vec3 nor = -roundedboxNormal(pos, scene.outerSize, scene.outerRadius);
+    vec3 nor = -roundedboxNormal(pos);
 
     rayDirection = -rayDirection;
     vec3 reflection = reflect(rayDirection, nor);
@@ -270,10 +269,11 @@ float traceOuter5(vec3 rayOrigin, vec3 rayDirection, float eta, vec4 sign) {
 vec3 trace(vec3 rayOrigin, vec3 rayDirection) {
   rayDirection = normalize(rayDirection);
   vec3 power = vec3(0., 0., 0.);
-  float d = roundedboxIntersectModified(rayOrigin, rayDirection, scene.outerSize, scene.outerRadius);
+  float d = roundedboxIntersectModified(rayOrigin, rayDirection, 1.0);
+  // float d = rayMarch(rayOrigin, rayDirection, 1.0);
   if(d < 1e14) {
     vec3 pos = rayOrigin + rayDirection * d;
-    vec3 nor = roundedboxNormal(pos, scene.outerSize, scene.outerRadius);
+    vec3 nor = roundedboxNormal(pos);
 
     float refractionPowerR = refractionPower + lightChannelDelta;
     float refractionPowerB = refractionPower - lightChannelDelta;
@@ -281,51 +281,55 @@ vec3 trace(vec3 rayOrigin, vec3 rayDirection) {
     vec3 refractionG = refract(rayDirection, nor, refractionPower);
     vec3 refractionB = refract(rayDirection, nor, refractionPowerB);
 
-    power.r += traceOuter5(pos + refractionR * rayFromInside.x, -refractionR, refractionPowerR, rayFromInside);
-    power.g += traceOuter5(pos + refractionG * rayFromInside.x, -refractionG, refractionPower, rayFromInside);
-    power.b += traceOuter5(pos + refractionB * rayFromInside.x, -refractionB, refractionPowerB, rayFromInside);
+    // power.r += traceOuter5(pos + refractionR * rayFromInside.x, -refractionR, refractionPowerR, rayFromInside);
+    // power.g += traceOuter5(pos + refractionG * rayFromInside.x, -refractionG, refractionPower, rayFromInside);
+    // power.b += traceOuter5(pos + refractionB * rayFromInside.x, -refractionB, refractionPowerB, rayFromInside);
 
-    power.r = traceOuter5(pos + refractionR * rayFromInside.x, -refractionR, refractionPowerR, rayFromInside);
-    power.g = traceOuter5(pos + refractionG * rayFromInside.x, -refractionG, refractionPower, rayFromInside);
-    power.b = traceOuter5(pos + refractionB * rayFromInside.x, -refractionB, refractionPowerB, rayFromInside);
+    power += traceOuter5(pos + refractionR * rayFromInside.x, -refractionR, refractionPowerR, rayFromInside);
+    // power.g = traceOuter5(pos + refractionG * rayFromInside.x, -refractionG, refractionPower, rayFromInside);
+    // power.b = traceOuter5(pos + refractionB * rayFromInside.x, -refractionB, refractionPowerB, rayFromInside);
 
   }
   return power;
 }
 
-void main() {
-  float innerFactor = mix(.5, .375, morphPower);
-  scene.outerSize = vec3(morphPower);
-  scene.outerRadius = 1. - morphPower;
-  scene.innerSize = vec3(scene.outerRadius * innerFactor);
-  scene.innerRadius = morphPower * innerFactor;
+void rotateLights(vec3 rayOrigin, vec3 camRight, vec3 camUp, vec3 camForward) {
+  vec3 dir;
 
+  scene.light[0] = scene.light[0].x * camRight + scene.light[0].y * camUp + scene.light[0].z * camForward;
+  dir = normalize(-scene.light[0]);
+  scene.projectedLight[0] = scene.light[0] + dir * roundedboxIntersectModified(scene.light[0], dir, 1.0);
+  // scene.projectedLight[0] = scene.light[0] + dir * rayMarch(scene.light[0], dir, 1.0);
+
+  scene.light[1] = scene.light[1].x * camRight + scene.light[1].y * camUp + scene.light[1].z * camForward;
+  dir = normalize(-scene.light[1]);
+  scene.projectedLight[1] = scene.light[1] + dir * roundedboxIntersectModified(scene.light[1], dir, 1.0);
+  // scene.projectedLight[1] = scene.light[1] + dir * rayMarch(scene.light[1], dir, 1.0);
+}
+
+void main() {
   vec3 power = vec3(0.);
 
   vec3 rayOrigin = camPos;
-  vec3 ww = normalize(-rayOrigin);
-  vec3 uu = normalize(cross(ww, vec3(0., 1., 0.)));
-  vec3 vv = cross(uu, ww);
+  vec3 camForward = normalize(-rayOrigin);
+  vec3 camRight = normalize(cross(camForward, vec3(0., 1., 0.)));
+  vec3 camUp = cross(camRight, camForward);
 
   scene.light[0] = vec3(.2, 2., -.8);
   scene.light[1] = vec3(.2, -2., -.8);
   vec3 dir;
 
-  scene.light[0] = scene.light[0].x * uu + scene.light[0].y * vv + scene.light[0].z * ww;
-  dir = normalize(-scene.light[0]);
-  scene.projectedLight[0] = scene.light[0] + dir * roundedboxIntersectModified(scene.light[0], dir, scene.outerSize, scene.outerRadius);
+  rotateLights(rayOrigin, camRight, camUp, camForward);
 
-  scene.light[1] = scene.light[1].x * uu + scene.light[1].y * vv + scene.light[1].z * ww;
-  dir = normalize(-scene.light[1]);
-  scene.projectedLight[1] = scene.light[1] + dir * roundedboxIntersectModified(scene.light[1], dir, scene.outerSize, scene.outerRadius);
+  vec2 uv = (2. * gl_FragCoord.xy - resolution) / resolution.y;
 
-  vec2 p = (2. * gl_FragCoord.xy - resolution) / resolution.y;
-
-  vec3 rayDirection = normalize(p.x * uu + p.y * vv + 3. * ww);
+  vec3 rayDirection = normalize(uv.x * camRight + uv.y * camUp + 3. * camForward);
 
   power += trace(rayOrigin, rayDirection);
 
   power = clamp(power, 0., 1.);
+
+  // power = pow(power, vec3(0.4545));
 
   gl_FragColor = vec4(power, 1.);
 }
