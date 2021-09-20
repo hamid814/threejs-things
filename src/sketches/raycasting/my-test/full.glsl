@@ -13,7 +13,7 @@ float lightChannelDelta = 0.02;
 vec3 size = vec3(0.9);
 float radius = 0.1;
 
-float reflectionFadePower = 0.8;
+float reflectionFadePower = 0.5;
 
 struct Scene {
   vec3 light[2];
@@ -283,16 +283,16 @@ vec3 trace(vec3 rayOrigin, vec3 rayDirection) {
     vec3 refractionG = refract(rayDirection, nor, refractionPower);
     vec3 refractionB = refract(rayDirection, nor, refractionPowerB);
 
-    power += traceOuter4(pos + refractionR, -refractionR, refractionPowerR);
-    power.g = traceOuter4(pos + refractionG, -refractionG, refractionPower);
-    power.b = traceOuter4(pos + refractionB, -refractionB, refractionPowerB);
+    // power += traceOuter5(pos + refractionR, -refractionR, refractionPowerR);
+    // power.g = traceOuter5(pos + refractionG, -refractionG, refractionPower);
+    // power.b = traceOuter5(pos + refractionB, -refractionB, refractionPowerB);
 
     vec3 rd = -refractionR;
     vec3 n;
     vec3 p = pos + refractionR;
-    float num = 1.0;
+    float num = 0.0;
 
-    for(int i = 6; i < 6; i++) {
+    for(int i = 1; i < 6; i++) {
       rd = normalize(rd);
       float d = roundedboxIntersectModified(p, rd);
       if(d < MAX_DIST) {

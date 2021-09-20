@@ -82,9 +82,9 @@ pass = new ShaderPass({
     bg: { value: img },
   },
   vertexShader: vs,
-  // fragmentShader: finalFrag,
+  fragmentShader: finalFrag,
   // fragmentShader: fullFrag,
-  fragmentShader: fullGLSL,
+  // fragmentShader: fullGLSL,
   // fragmentShader: speedrun,
 });
 

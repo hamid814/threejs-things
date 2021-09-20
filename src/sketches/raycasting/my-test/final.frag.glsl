@@ -194,7 +194,7 @@ float getLight(vec3 ro, vec3 rd) {
   return power;
 }
 
-Reflection getReflection(Reflection inReflection, int step) {
+Reflection getReflection(Reflection inReflection, float step) {
   inReflection.direction = normalize(inReflection.direction);
   Reflection ir = inReflection;
 
@@ -247,7 +247,7 @@ Reflection getReflection(Reflection inReflection, int step) {
 
     // or.power = min(1.0, or.power);
     or.power = clamp(or.power, 0.0, 1.0);
-    // or.power *= pow(0.5, float(step));
+    or.power *= pow(0.8, step);
   }
 
   return or;
@@ -331,10 +331,13 @@ void main() {
 
         vec3 refColor = vec3(0.);
 
+        float num = 1.0;
+
         for(int i = 0; i < reflSteps; i++) {
-          rflR = getReflection(rflR, i);
+          rflR = getReflection(rflR, num);
+          num += 1.0;
+          refColor += rflR.power;
         }
-        refColor += rflR.power;
         // for(int i = 0; i < reflSteps; i++) {
         //   rflG = getReflection(rflG, i);
         // }
