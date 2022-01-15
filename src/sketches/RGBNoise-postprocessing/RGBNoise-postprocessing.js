@@ -58,7 +58,7 @@ const render = () => {
   composer.render();
 
   orb.material.uniforms.time.value = time;
-  time += 0.003;
+  time += 0.0013;
 
   requestAnimationFrame(render);
 };

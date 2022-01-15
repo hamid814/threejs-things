@@ -10,18 +10,11 @@ void main() {
   noiseValue *= 0.01;
   
   vec2 rUv = vUv;
-  rUv.x += noiseValue;
+  rUv.x += noiseValue * 2.0;
 
-  vec2 gUv = vUv;
-  rUv.x += noiseValue;
-
-  vec2 bUv = vUv;
-  // bUv.x += noiseValue;
-  
   float r = texture2D(tDiffuse, rUv).r;
-  float g = texture2D(tDiffuse, gUv).g;
-  float b = texture2D(tDiffuse, bUv).b;
+  vec2 gb = texture2D(tDiffuse, vUv).gb;
 
-  gl_FragColor = vec4(r, g, b, 1.0);
+  gl_FragColor = vec4(r, gb, 1.0);
 }
   
