@@ -300,19 +300,43 @@ vec3 trace(vec3 rayOrigin, vec3 rayDirection) {
         n = -roundedboxNormal(p);
 
         rd = -rd;
+
+        // vec3 reflection = reflect(rd, n);
+        // reflection = normalize(reflection);
+        // vec3 refraction = refract(rd, n, refractionPowerR);
+        // refraction = normalize(refraction);
+
+        // float reflectedLights[2];
+        // reflectedLights[0] = dot(normalize(scene.projectedLight[0] - p), reflection);
+        // reflectedLights[1] = dot(normalize(scene.projectedLight[1] - p), reflection);
+        // float reflectedLight = smoothstep(.95, 1., reflectedLights[0]) + smoothstep(.75, 1., reflectedLights[1]);
+        // power += reflectedLight * pow(reflectionFadePower, num);
+
+        // float refractedLights[2];
+        // refractedLights[0] = dot(normalize(scene.light[0] - p), refraction);
+        // refractedLights[1] = dot(normalize(scene.light[1] - p), refraction);
+        // float refractedLight = smoothstep(.0, 1., refractedLights[0]) + smoothstep(.0, 1., refractedLights[1]);
+        // power += refractedLight * pow(reflectionFadePower, num);
+
         vec3 reflection = reflect(rd, n);
-        vec3 refraction = refract(rd, n, refractionPowerR);
+        reflection = normalize(reflection);
+        vec3 refraction = refract(rd, n, refractionPower);
+        refraction = normalize(refraction);
 
-        vec3 nrefl = normalize(reflection);
-        float reflectedLight = smoothstep(.95, 1., dot(normalize(scene.projectedLight[0] - p), nrefl)) +
-          smoothstep(.75, 1., dot(normalize(scene.projectedLight[1] - p), nrefl));
-        power += reflectedLight * pow(reflectionFadePower, num);
+        float rfl0 = dot(normalize(scene.projectedLight[0] - p), reflection);
+        rfl0 = smoothstep(0.95, 1.0, rfl0);
+        float rfl1 = dot(normalize(scene.projectedLight[1] - p), reflection);
+        rfl1 = smoothstep(0.75, 1.0, rfl1);
+        float rfl = rfl0 + rfl1;
 
-        float refractedLights[2];
-        refractedLights[0] = dot(normalize(scene.light[0] - p), normalize(refraction));
-        refractedLights[1] = dot(normalize(scene.light[1] - p), normalize(refraction));
-        float refractedLight = (smoothstep(.0, 1., refractedLights[0]) + smoothstep(.0, 1., refractedLights[1]));
-        power += refractedLight * pow(reflectionFadePower, num);
+        float rfr0 = dot(normalize(scene.light[0] - p), refraction);
+        rfr0 = smoothstep(0.0, 1.0, rfr0);
+        float rfr1 = dot(normalize(scene.light[1] - p), refraction);
+        rfr1 = smoothstep(0.0, 1.0, rfr1);
+        float rfr = rfr0 + rfr1;
+
+        power += (rfl + rfr) * pow(reflectionFadePower, num);
+        // power += rfl + rfr;
 
         num += 1.0;
 

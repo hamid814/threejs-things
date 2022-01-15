@@ -44,7 +44,7 @@ float sdPlane(vec3 p) {
   float d = dot(p, normalize(vec3(0.0, 0.0, 1.0)));
   return d;
 }
-float sdBox(vec3 point, vec3 position, vec3 size) {
+float sdBox(vec3 point, vec3 position, vec3 size, float sign) {
   // point.xz *= rotate(-uTime);
   // point.xy *= rotate(3.1415 * 0.25);
   point += position;
@@ -94,11 +94,11 @@ float sdBoundingBox(vec3 p, vec3 b, float e) {
 
   return min(min(length(max(vec3(p.x, q.y, q.z), 0.0)) + min(max(p.x, max(q.y, q.z)), 0.0), length(max(vec3(q.x, p.y, q.z), 0.0)) + min(max(q.x, max(p.y, q.z)), 0.0)), length(max(vec3(q.x, q.y, p.z), 0.0)) + min(max(q.x, max(q.y, p.z)), 0.0));
 }
-float getDist(vec3 point) {
+float getDist(vec3 point, float sign) {
   float time = uTime;
   float s = sin(time) * 0.2 + 0.8;
   float c = cos(time + 3.14 * 0.5) * 0.2 + 0.8;
-  float box = sdBox(point, vec3(0.), vec3(1.));
+  float box = sdBox(point, vec3(0.), vec3(1.), sign);
   // float vastBox = sdBox(point, vec3(0.), vec3(5.0, 5.0, 0.05));
   // box = abs(box) - 0.4;
   // float prism = sdHexPrism(point, vec2(1.5) * c);
@@ -123,14 +123,14 @@ float getDist(vec3 point) {
   return box;
   // return mix(box, bBox, 0.2);
   // return mix(box, bBox, sin(time * 0.5) * 0.5 + 0.5);
-  return smin(box, sphere, 0.1);
+  // return smin(box, sphere, 0.1);
 }
 float rayMarch(vec3 ro, vec3 rd, float sign) {
   float dO = 0.;
 
   for(int i = 0; i < MAX_STEPS; i++) {
     vec3 p = ro + rd * dO;
-    float dS = getDist(p) * sign;
+    float dS = getDist(p, sign) * sign;
     dO += dS;
     if(dO > MAX_DIST || abs(dS) < SURF_DIST)
       break;
@@ -139,10 +139,10 @@ float rayMarch(vec3 ro, vec3 rd, float sign) {
   return dO;
 }
 vec3 getNormal(vec3 point) {
-  float d = getDist(point);
+  float d = getDist(point, 1.0);
   vec2 e = vec2(.001, 0);
 
-  vec3 n = d - vec3(getDist(point - e.xyy), getDist(point - e.yxy), getDist(point - e.yyx));
+  vec3 n = d - vec3(getDist(point - e.xyy, 1.0), getDist(point - e.yxy, 1.0), getDist(point - e.yyx, 1.0));
 
   return normalize(n);
 }
@@ -202,6 +202,8 @@ Reflection getReflection(Reflection inReflection, float step) {
   Reflection or;
   or.power = 0.;
 
+  float fadePower = pow(0.8, step);
+
   float d = rayMarch(ir.position, ir.direction, -1.0);
   if(d < MAX_DIST) {
     or.position = ir.position + ir.direction * d;
@@ -209,23 +211,23 @@ Reflection getReflection(Reflection inReflection, float step) {
 
     vec3 reflection = reflect(ir.direction, n);
     reflection = normalize(reflection);
-    vec3 refraction = refract(-ir.direction, n, rIOR);
+    vec3 refraction = refract(ir.direction, n, rIOR);
     refraction = normalize(refraction);
 
-    float rfl0 = dot(normalize(lights[0] - or.position), reflection);
-    rfl0 = smoothstep(0.99, 1.0, rfl0);
-    float rfl1 = dot(normalize(lights[1] - or.position), reflection);
-    rfl1 = smoothstep(0.97, 1.0, rfl1);
+    float rfl0 = dot(normalize(projectedLights[0] - or.position), reflection);
+    rfl0 = smoothstep(0.95, 1.0, rfl0);
+    float rfl1 = dot(normalize(projectedLights[1] - or.position), reflection);
+    rfl1 = smoothstep(0.75, 1.0, rfl1);
 
-    float rfr0 = dot(normalize(projectedLights[0] - or.position), refraction);
+    float rfr0 = dot(normalize(lights[0] - or.position), refraction);
     rfr0 = smoothstep(0.0, 1.0, rfr0);
-    float rfr1 = dot(normalize(projectedLights[1] - or.position), refraction);
+    float rfr1 = dot(normalize(lights[1] - or.position), refraction);
     rfr1 = smoothstep(0.0, 1.0, rfr1);
 
-    or.power += rfl0;
-    or.power += rfl1;
-    or.power += rfr0;
-    or.power += rfr1;
+    or.power += rfl0 * fadePower;
+    or.power += rfl1 * fadePower;
+    or.power += rfr0 * fadePower;
+    or.power += rfr1 * fadePower;
 
     or.direction = reflection;
     or.position = or.position + reflection;
@@ -245,9 +247,9 @@ Reflection getReflection(Reflection inReflection, float step) {
     // float refractedLight = (smoothstep(.0, 1., refractedLights[0]) + smoothstep(.0, 1., refractedLights[1]));
     // or.power += refractedLight;
 
-    // or.power = min(1.0, or.power);
-    or.power = clamp(or.power, 0.0, 1.0);
-    or.power *= pow(0.8, step);
+    or.power = min(1.0, or.power);
+    // or.power = clamp(or.power, 0.0, 1.0);
+    // or.power *= pow(0.8, step);
   }
 
   return or;
@@ -336,8 +338,8 @@ void main() {
         for(int i = 0; i < reflSteps; i++) {
           rflR = getReflection(rflR, num);
           num += 1.0;
-          refColor += rflR.power;
         }
+        refColor += rflR.power;
         // for(int i = 0; i < reflSteps; i++) {
         //   rflG = getReflection(rflG, i);
         // }
