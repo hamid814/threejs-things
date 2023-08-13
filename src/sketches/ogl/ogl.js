@@ -12,10 +12,16 @@ import {
 import vertex from './vert.glsl';
 import fragment from './frag.glsl';
 
-document.getElementById('webgl').remove()
+// Remove threejs default canvas
+document.getElementById('webgl').remove();
+
+const defaultValues = {
+  time: 0.025,
+};
 
 const values = {
-  boxSize: new Vec3(1.5, 0.3, 0.3),
+  boxSize: new Vec3(1, 1, 0.1),
+  time: defaultValues.time,
 };
 
 const renderer = new Renderer({
@@ -62,7 +68,7 @@ function update() {
   // Don't need a camera if camera uniforms aren't required
   renderer.render({ scene: mesh });
 
-  time += 0.025;
+  time += values.time;
 
   program.uniforms.uTime.value = time;
   program.uniforms.camPos.value = camera.position;
@@ -80,3 +86,36 @@ setTimeout(() => {
     z: 1,
   });
 }, 500);
+
+// Put a button on corner to stop glass rotating
+setTimeout(() => {
+  const btn = document.body.appendChild(document.createElement('button'));
+  btn.innerText = 'Stop rotate';
+  btn.style = `
+    position: fixed;
+    padding: 15px;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;`;
+  btn.addEventListener('click', () => {
+    if (btn.innerText == 'Stop rotate') {
+      gsap.to(values, {
+        duration: 2,
+        time: 0,
+        ease: 'Circ.easeOut',
+      });
+      btn.innerText = 'Roate';
+    } else {
+      // values.time = defaultValues.time;
+      gsap.to(values, {
+        duration: 2,
+        time: defaultValues.time,
+        ease: 'Circ.easeIn',
+      });
+      btn.innerText = 'Stop rotate';
+    }
+  });
+}, 0);
